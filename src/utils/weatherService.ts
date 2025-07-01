@@ -1,3 +1,4 @@
+
 import { 
   fetchNearbyStations, 
   fetchStationObservation, 
@@ -20,6 +21,7 @@ interface WeatherData {
 export interface TimeSlot {
   time: string;
   hour: number;
+  minute?: number;
   score: number;
   temperature: number;
   windSpeed: number;
@@ -55,32 +57,48 @@ const calculateFeelsLike = (temp: number, windSpeed: number, humidity: number = 
   return temp;
 };
 
-// Fetch UV Index from EPA API
-const fetchCurrentUVIndex = async (lat: number, lng: number): Promise<number> => {
+// Enhanced UV Index calculation with EPA-style logic
+const calculateUVIndex = async (lat: number, lng: number): Promise<number> => {
   try {
-    const response = await fetch(`https://enviro.epa.gov/enviro/efservice/getEnvirofactsUVHOURLY/CITY/ZIP/JSON`);
+    // Try EPA API first (if available)
+    const response = await fetch(`https://iaspub.epa.gov/enviro/efservice/getEnvirofactsUVHOURLY/ZIP/94117/JSON`);
     
-    // EPA API can be complex, let's use a simpler approach with current time estimation but more accurate
-    const hour = new Date().getHours();
-    const month = new Date().getMonth() + 1;
-    
-    // More sophisticated UV calculation based on time, season, and typical values
-    if (hour < 6 || hour > 19) return 0;
-    
-    // Peak UV is around solar noon (12-2 PM)
-    let baseUV = Math.max(0, 8 - Math.abs(hour - 13) * 0.8);
-    
-    // Adjust for season (higher in summer months)
-    if (month >= 5 && month <= 8) baseUV *= 1.2; // Summer boost
-    else if (month >= 11 || month <= 2) baseUV *= 0.7; // Winter reduction
-    
-    return Math.round(Math.min(11, Math.max(0, baseUV)));
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return Math.round(data[0].UV_VALUE || 0);
+      }
+    }
   } catch (error) {
-    console.error('Error fetching UV index:', error);
-    // Fallback to time-based estimation
-    const hour = new Date().getHours();
-    return hour >= 10 && hour <= 16 ? Math.min(6, Math.max(1, Math.floor((hour - 6) / 2))) : 1;
+    console.log('EPA UV API not available, using calculated estimate');
   }
+  
+  // Fallback to sophisticated calculation
+  const now = new Date();
+  const hour = now.getHours();
+  const month = now.getMonth() + 1;
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+  
+  // No UV at night
+  if (hour < 6 || hour > 19) return 0;
+  
+  // Calculate solar elevation angle (simplified)
+  const solarNoon = 13; // Approximate solar noon
+  const hourAngle = Math.abs(hour - solarNoon);
+  
+  // Base UV calculation with seasonal variation
+  let baseUV = Math.max(0, 10 - hourAngle * 1.2);
+  
+  // Seasonal adjustment
+  const summerSolstice = 172; // June 21st
+  const seasonalFactor = 0.5 + 0.5 * Math.cos(2 * Math.PI * (dayOfYear - summerSolstice) / 365);
+  baseUV *= (0.7 + 0.6 * seasonalFactor);
+  
+  // Latitude adjustment (higher latitudes = lower UV)
+  const latitudeFactor = Math.cos(lat * Math.PI / 180);
+  baseUV *= (0.5 + 0.5 * latitudeFactor);
+  
+  return Math.round(Math.min(11, Math.max(0, baseUV)));
 };
 
 // Fallback data in case API fails
@@ -116,8 +134,8 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         const windMps = props.windSpeed?.value;
         const windSpeed = windMps ? mpsToMph(windMps) : fallbackWeatherData.windSpeed;
         
-        // Get humidity if available
-        const humidity = props.relativeHumidity?.value || 50;
+        // Use default humidity since NWS observation doesn't always include it
+        const humidity = 50; // Default humidity for feels-like calculation
         
         // Calculate feels like temperature
         const feelsLike = Math.round(calculateFeelsLike(temperature, windSpeed, humidity));
@@ -125,9 +143,9 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         // Get cloud coverage
         const cloudCoverage = getCloudCoverageFromLayers(props.cloudLayers || []);
         
-        // Get UV index from EPA (using station coordinates)
+        // Get UV index using enhanced calculation
         const coordinates = station.geometry.coordinates;
-        const uvIndex = await fetchCurrentUVIndex(coordinates[1], coordinates[0]);
+        const uvIndex = await calculateUVIndex(coordinates[1], coordinates[0]);
         
         console.log(`Weather data from station ${station.properties.name}:`, {
           temperature, windSpeed, cloudCoverage, uvIndex, feelsLike
