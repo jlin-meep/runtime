@@ -3,6 +3,7 @@ import React from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
+import Map from '../components/Map';
 import { getCurrentWeather, getYesterdayWeather, getHourlyWeatherData, getComparisonData } from '../utils/weatherService';
 
 const Index = () => {
@@ -10,6 +11,9 @@ const Index = () => {
   const yesterdayWeather = getYesterdayWeather();
   const hourlyData = getHourlyWeatherData();
   const comparisonData = getComparisonData();
+  
+  // Get Mapbox token from localStorage
+  const mapboxToken = localStorage.getItem('mapbox_token') || '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
@@ -37,6 +41,11 @@ const Index = () => {
             />
             
             <ComparisonCard data={comparisonData} />
+          </div>
+
+          {/* Map Section */}
+          <div className="col-span-full">
+            <Map mapboxToken={mapboxToken} />
           </div>
 
           {/* Additional Info */}
