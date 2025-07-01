@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Clock, Sun, Timer, Info } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -324,13 +323,13 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
             <div className="bg-white/10 rounded-xl p-4 mt-4">
               <h4 className="text-white font-semibold mb-3">Scoring Breakdown (Total: {bestTimeInWindow.scoreBreakdown.total}/100)</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-white/80">Wind: {bestTimeInWindow.scoreBreakdown.windScore}/40</div>
-                <div className="text-white/80">UV: {bestTimeInWindow.scoreBreakdown.uvScore}/30</div>
-                <div className="text-white/80">Temperature: {bestTimeInWindow.scoreBreakdown.tempScore}/20</div>
-                <div className="text-white/80">Clouds: {bestTimeInWindow.scoreBreakdown.cloudScore}/10</div>
+                <div className="text-white/80">Wind (40%): {bestTimeInWindow.scoreBreakdown.windScore}/40</div>
+                <div className="text-white/80">Temperature (30%): {bestTimeInWindow.scoreBreakdown.tempScore}/30</div>
+                <div className="text-white/80">UV (20%): {bestTimeInWindow.scoreBreakdown.uvScore}/20</div>
+                <div className="text-white/80">Clouds (10%): {bestTimeInWindow.scoreBreakdown.cloudScore}/10</div>
               </div>
               <div className="text-white/70 text-xs mt-2">
-                Higher scores indicate better running conditions. Wind and UV are weighted most heavily.
+                Wind conditions have the highest impact on your running score, followed by temperature comfort.
               </div>
             </div>
           )}

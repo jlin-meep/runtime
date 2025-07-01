@@ -1,4 +1,3 @@
-
 import { 
   fetchCurrentWeather, 
   fetchHourlyForecast, 
@@ -160,9 +159,9 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
   ];
 };
 
-// New detailed scoring function with transparency
+// New detailed scoring function with updated weightings
 const calculateDetailedScore = (temperature: number, windSpeed: number, cloudCoverage: number, uvIndex: number, hour: number) => {
-  // Wind scoring - heavily penalize winds over 15mph
+  // Wind scoring - 40% weight (40 points max) - heavily penalize winds over 15mph
   let windScore;
   if (windSpeed <= 10) {
     windScore = 40; // Perfect conditions
@@ -172,27 +171,27 @@ const calculateDetailedScore = (temperature: number, windSpeed: number, cloudCov
     windScore = Math.max(0, (25 - windSpeed) / 10) * 15; // Poor conditions
   }
   
-  // UV scoring - favor moderate UV levels (2-5), penalize very low and very high
-  let uvScore;
-  if (uvIndex >= 2 && uvIndex <= 5) {
-    uvScore = 30; // Ideal UV range
-  } else if (uvIndex < 2) {
-    uvScore = 20; // Low UV (early/late)
-  } else if (uvIndex <= 7) {
-    uvScore = Math.max(0, (8 - uvIndex) / 3) * 15; // Manageable UV
-  } else {
-    uvScore = 5; // Dangerous UV
-  }
-  
-  // Temperature scoring - ideal range is 60-75°F
+  // Temperature scoring - 30% weight (30 points max) - ideal range is 60-75°F
   let tempScore;
   if (temperature >= 60 && temperature <= 75) {
-    tempScore = 20; // Perfect temperature range
+    tempScore = 30; // Perfect temperature range
   } else {
-    tempScore = Math.max(0, (100 - Math.abs(temperature - 67.5)) / 100) * 20;
+    tempScore = Math.max(0, (100 - Math.abs(temperature - 67.5)) / 100) * 30;
   }
   
-  // Cloud coverage scoring - prefer some clouds for comfort
+  // UV scoring - 20% weight (20 points max) - favor moderate UV levels (2-5), penalize very low and very high
+  let uvScore;
+  if (uvIndex >= 2 && uvIndex <= 5) {
+    uvScore = 20; // Ideal UV range
+  } else if (uvIndex < 2) {
+    uvScore = 13; // Low UV (early/late)
+  } else if (uvIndex <= 7) {
+    uvScore = Math.max(0, (8 - uvIndex) / 3) * 10; // Manageable UV
+  } else {
+    uvScore = 3; // Dangerous UV
+  }
+  
+  // Cloud coverage scoring - 10% weight (10 points max) - prefer some clouds for comfort
   let cloudScore;
   if (cloudCoverage >= 20 && cloudCoverage <= 60) {
     cloudScore = 10; // Some cloud cover is good
@@ -206,7 +205,7 @@ const calculateDetailedScore = (temperature: number, windSpeed: number, cloudCov
   const timeDiff = Math.abs(hour - currentHour);
   const currentTimeBonus = timeDiff <= 1 ? 3 : 0;
   
-  const total = Math.round(windScore + uvScore + tempScore + cloudScore + currentTimeBonus);
+  const total = Math.round(windScore + tempScore + uvScore + cloudScore + currentTimeBonus);
   
   return {
     windScore: Math.round(windScore),
