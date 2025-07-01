@@ -187,8 +187,8 @@ export const getWeatherStations = async (): Promise<WeatherStation[]> => {
         id: station.properties.stationIdentifier,
         name: station.properties.name,
         coordinates: [
-          station.properties.geometry.coordinates[0], 
-          station.properties.geometry.coordinates[1]
+          station.geometry.coordinates[0], 
+          station.geometry.coordinates[1]
         ] as [number, number],
         isActive
       };
