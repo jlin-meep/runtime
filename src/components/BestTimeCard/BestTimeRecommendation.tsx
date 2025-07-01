@@ -77,7 +77,7 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <PopoverContent 
             className={`bg-white/95 backdrop-blur-sm border border-white/30 p-4 ${
               isMobile 
-                ? 'w-[calc(100vw-2rem)] max-w-[320px]' 
+                ? 'w-[calc(100vw-4rem)] max-w-[280px]' 
                 : 'w-80'
             }`}
             align="end"
