@@ -14,6 +14,7 @@ interface BestTimeCardProps {
   currentWeather?: WeatherData;
   onLocationChange?: (coordinates: [number, number], address?: string) => void;
   initialLocation?: [number, number];
+  onTimeWindowChange?: (timeWindow: number[]) => void;
 }
 
 const BestTimeCard: React.FC<BestTimeCardProps> = ({ 
@@ -21,11 +22,18 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
   locationName = 'Your Location',
   currentWeather,
   onLocationChange,
-  initialLocation
+  initialLocation,
+  onTimeWindowChange
 }) => {
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
   const [isLocationSectionOpen, setIsLocationSectionOpen] = useState(false);
+
+  // Notify parent component when time window changes
+  const handleTimeWindowChange = (newTimeWindow: number[]) => {
+    setTimeWindow(newTimeWindow);
+    onTimeWindowChange?.(newTimeWindow);
+  };
 
   const bestTimeInWindow = useBestTimeLogic({
     hourlyData,
@@ -55,7 +63,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
         {/* Controls - Side by side on all screen sizes */}
         <TimeWindowControls
           timeWindow={timeWindow}
-          setTimeWindow={setTimeWindow}
+          setTimeWindow={handleTimeWindowChange}
           runDuration={runDuration}
           setRunDuration={setRunDuration}
         />

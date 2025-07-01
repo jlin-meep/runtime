@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
+import { calculateForecastRange } from '../utils/forecastUtils';
 
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -25,6 +25,7 @@ const Index = () => {
 
   const [userLocation, setUserLocation] = useState<[number, number]>(getInitialLocation());
   const [locationName, setLocationName] = useState(getInitialLocationName());
+  const [timeWindow, setTimeWindow] = useState([9, 20]); // Track time window state
 
   // Use your valid Mapbox token for reverse geocoding
   const mapboxToken = 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
@@ -137,6 +138,12 @@ const Index = () => {
     console.log('✅ Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
   };
 
+  // Calculate forecast range for the current time window
+  const forecastRange = React.useMemo(() => {
+    if (hourlyData.length === 0) return undefined;
+    return calculateForecastRange(hourlyData, timeWindow);
+  }, [hourlyData, timeWindow]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
@@ -169,12 +176,19 @@ const Index = () => {
               currentWeather={currentWeather}
               onLocationChange={handleLocationChange}
               initialLocation={userLocation}
+              onTimeWindowChange={setTimeWindow}
             />
           </div>
 
           {/* Weather Stats Grid */}
           <div className="grid md:grid-cols-2 gap-6">
-            {currentWeather && <WeatherCard title="Current Conditions" data={currentWeather} />}
+            {currentWeather && (
+              <WeatherCard 
+                title="Current Conditions" 
+                data={currentWeather} 
+                forecastRange={forecastRange}
+              />
+            )}
             
             {comparisonData && <ComparisonCard data={comparisonData} />}
           </div>

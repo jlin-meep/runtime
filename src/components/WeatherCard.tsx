@@ -37,16 +37,16 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
 
   const uvInfo = getUVLevel(data.uvIndex);
 
-  // Use provided forecast range or fallback to mock data
+  // Always use provided forecast range when available, no mock data fallback
   const forecast = forecastRange || {
-    tempHigh: data.temperature + Math.floor(Math.random() * 8) + 2,
-    tempLow: data.temperature - Math.floor(Math.random() * 8) - 2,
-    windHigh: data.windSpeed + Math.floor(Math.random() * 5) + 2,
-    windLow: Math.max(0, data.windSpeed - Math.floor(Math.random() * 5) - 2),
-    cloudHigh: Math.min(100, data.cloudCoverage + Math.floor(Math.random() * 20) + 5),
-    cloudLow: Math.max(0, data.cloudCoverage - Math.floor(Math.random() * 20) - 5),
-    uvHigh: Math.min(11, data.uvIndex + Math.floor(Math.random() * 2) + 1),
-    uvLow: Math.max(0, data.uvIndex - Math.floor(Math.random() * 2) - 1)
+    tempHigh: data.temperature,
+    tempLow: data.temperature,
+    windHigh: data.windSpeed,
+    windLow: data.windSpeed,
+    cloudHigh: data.cloudCoverage,
+    cloudLow: data.cloudCoverage,
+    uvHigh: data.uvIndex,
+    uvLow: data.uvIndex
   };
 
   return (
