@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+
 interface ComparisonData {
   temperature: {
     current: number;
@@ -18,12 +19,25 @@ interface ComparisonData {
     previous: number;
   };
 }
+
 interface ComparisonCardProps {
   data: ComparisonData;
 }
+
 const ComparisonCard: React.FC<ComparisonCardProps> = ({
   data
 }) => {
+  const getCurrentPacificTime = () => {
+    const now = new Date();
+    const pacificTime = now.toLocaleTimeString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return pacificTime;
+  };
+
   const renderComparison = (current: number, previous: number, unit: string, label: string) => {
     const diff = current - previous;
     const isIncrease = diff > 0;
@@ -39,8 +53,9 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
         </div>
       </div>;
   };
+
   return <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
-      <h3 className="text-xl font-semibold text-white mb-4">Today vs Yesterday At X</h3>
+      <h3 className="text-xl font-semibold text-white mb-4">Today vs Yesterday At {getCurrentPacificTime()}</h3>
       
       <div className="space-y-3">
         {renderComparison(data.temperature.current, data.temperature.previous, "°F", "Temperature")}
@@ -56,4 +71,5 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
       </div>
     </div>;
 };
+
 export default ComparisonCard;
