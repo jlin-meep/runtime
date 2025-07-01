@@ -21,11 +21,13 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
     // Fetch weather stations
     const loadStations = async () => {
       try {
+        console.log('🔄 Starting to load weather stations...');
         const stationData = await getWeatherStations();
+        console.log('✅ Loaded weather stations:', stationData.length, 'stations');
+        console.log('Station details:', stationData);
         setStations(stationData);
-        console.log('Loaded weather stations:', stationData);
       } catch (error) {
-        console.error('Failed to load weather stations:', error);
+        console.error('❌ Failed to load weather stations:', error);
       } finally {
         setLoading(false);
       }
@@ -35,7 +37,12 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken) {
+      console.log('⚠️ Map container or token not available');
+      return;
+    }
+
+    console.log('🗺️ Initializing map with', stations.length, 'stations');
 
     // Initialize map
     mapboxgl.accessToken = mapboxToken;
@@ -56,8 +63,13 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
       )
       .addTo(map.current);
 
+    console.log('📍 Added NOPA marker');
+
     // Add weather station markers
-    stations.forEach((station) => {
+    console.log('📍 Adding', stations.length, 'weather station markers');
+    stations.forEach((station, index) => {
+      console.log(`Adding station ${index + 1}:`, station.name, station.coordinates, station.isActive ? 'Active' : 'Inactive');
+      
       const markerColor = station.isActive ? '#22c55e' : '#64748b'; // Green for active, gray for inactive
       const marker = new mapboxgl.Marker({ color: markerColor })
         .setLngLat(station.coordinates)
@@ -126,6 +138,9 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
           <span>🔴 Inactive stations ({stations.filter(s => !s.isActive).length})</span>
         </div>
         {loading && <p className="text-center text-white/60">Loading weather stations...</p>}
+        {!loading && stations.length === 0 && (
+          <p className="text-center text-white/60">No weather stations found</p>
+        )}
       </div>
     </div>
   );
