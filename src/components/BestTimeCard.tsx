@@ -120,7 +120,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
           {/* Time Window Slider */}
           <div className="w-64 p-3 bg-white/10 rounded-xl border border-white/20">
             <h3 className="text-white font-semibold text-sm mb-3">Available Window</h3>
-            <div className="relative mb-6">
+            <div className="relative mb-4">
               <Slider
                 value={timeWindow}
                 onValueChange={setTimeWindow}
@@ -130,9 +130,9 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
                 className="w-full"
               />
               {/* Time labels positioned under each handle */}
-              <div className="absolute -bottom-6 left-0 right-0">
+              <div className="absolute -bottom-2 left-0 right-0">
                 <div 
-                  className="absolute text-white/80 text-xs whitespace-nowrap"
+                  className="absolute text-white text-xs whitespace-nowrap"
                   style={{ 
                     left: `${(timeWindow[0] / 23) * 100}%`, 
                     transform: 'translateX(-50%)' 
@@ -141,7 +141,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
                   {formatTime(timeWindow[0])}
                 </div>
                 <div 
-                  className="absolute text-white/80 text-xs whitespace-nowrap"
+                  className="absolute text-white text-xs whitespace-nowrap"
                   style={{ 
                     left: `${(timeWindow[1] / 23) * 100}%`, 
                     transform: 'translateX(-50%)' 
