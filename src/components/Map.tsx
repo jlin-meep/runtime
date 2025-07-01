@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -18,9 +17,17 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
   const [currentLocation, setCurrentLocation] = useState<[number, number]>(initialLocation);
   const [addressInput, setAddressInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
-  // Hardcoded Mapbox token - replace with your actual token
-  const mapboxToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbTR1aXNvcTcwMDFhMmpzZDVma3FsOGQzIn0.BM_zHpJyQJaLnNALAjE5jA';
+  // Using a different approach - let's try without hardcoded token first
+  const [mapboxToken, setMapboxToken] = useState('');
+
+  useEffect(() => {
+    // Try to get token from environment or use fallback
+    const token = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbTR1aXNvcTcwMDFhMmpzZDVma3FsOGQzIn0.BM_zHpJyQJaLnNALAjE5jA';
+    console.log('🔑 Using Mapbox token:', token.substring(0, 20) + '...');
+    setMapboxToken(token);
+  }, []);
 
   // Update current location when initialLocation prop changes
   useEffect(() => {
@@ -35,26 +42,31 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) {
-      console.error('Missing map container or token');
+      console.log('❌ Missing requirements:', { 
+        container: !!mapContainer.current, 
+        token: !!mapboxToken 
+      });
       return;
     }
 
-    console.log('🗺️ Initializing interactive map...');
-    console.log('Token available:', !!mapboxToken);
-    console.log('Container available:', !!mapContainer.current);
-
-    // Initialize map
+    console.log('🗺️ Initializing map with token:', mapboxToken.substring(0, 20) + '...');
+    
+    // Set the access token
     mapboxgl.accessToken = mapboxToken;
     
     try {
+      // Test token validity first
+      console.log('🔍 Testing token validity...');
+      
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: currentLocation,
         zoom: 14,
+        attributionControl: false // Remove attribution to see if that helps
       });
 
-      console.log('Map instance created successfully');
+      console.log('✅ Map instance created');
 
       // Add initial marker
       marker.current = new mapboxgl.Marker({ 
@@ -68,7 +80,7 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
         )
         .addTo(map.current);
 
-      console.log('Marker added successfully');
+      console.log('📍 Marker added');
 
       // Handle marker drag
       marker.current.on('dragend', () => {
@@ -93,25 +105,35 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Map load event
+      // Map events for debugging
       map.current.on('load', () => {
         console.log('✅ Map loaded successfully');
+        setMapError(null);
       });
 
-      // Map error event
       map.current.on('error', (e) => {
         console.error('❌ Map error:', e);
+        setMapError('Map failed to load. Please check your internet connection.');
+      });
+
+      map.current.on('styledata', () => {
+        console.log('🎨 Map style loaded');
+      });
+
+      map.current.on('sourcedata', () => {
+        console.log('📊 Map source data loaded');
       });
 
     } catch (error) {
       console.error('❌ Error initializing map:', error);
+      setMapError('Failed to initialize map');
     }
 
     return () => {
       console.log('🧹 Cleaning up map');
       map.current?.remove();
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, currentLocation]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -179,6 +201,12 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
   return (
     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Set Your Running Location</h3>
+      
+      {mapError && (
+        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+          <p className="text-white text-sm">⚠️ {mapError}</p>
+        </div>
+      )}
       
       {/* Location Controls */}
       <div className="mb-4 space-y-3">
