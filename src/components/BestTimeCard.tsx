@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Clock, Sun, Timer } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -74,16 +73,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
     return `${hour - 12} PM`;
   };
 
-  if (!bestTimeInWindow) {
-    return (
-      <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
-        <div className="text-center text-white">
-          <p>No suitable times available in your selected window for today</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
       <div className="flex items-start justify-between mb-4">
@@ -155,29 +144,40 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
         </div>
       </div>
       
-      <div className="text-center py-6">
-        <div className="text-6xl font-bold text-white mb-2">{bestTimeInWindow.time}</div>
-        <p className="text-white/90 text-lg mb-2">{bestTimeInWindow.reason}</p>
-        <p className="text-white/70 text-sm mb-4">
-          Perfect start time for your {runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run
-        </p>
-        
-        <div className="flex justify-center space-x-6 text-sm">
-          <div className="flex items-center space-x-1">
-            <Sun className="w-4 h-4 text-yellow-300" />
-            <span className="text-white/80">{bestTimeInWindow.conditions.temperature}°F</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-white/80">💨 {bestTimeInWindow.conditions.windSpeed} mph</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-white/80">☁️ {bestTimeInWindow.conditions.cloudCoverage}%</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-white/80">UV {bestTimeInWindow.conditions.uvIndex}</span>
+      {bestTimeInWindow ? (
+        <div className="text-center py-6">
+          <div className="text-6xl font-bold text-white mb-2">{bestTimeInWindow.time}</div>
+          <p className="text-white/90 text-lg mb-2">{bestTimeInWindow.reason}</p>
+          <p className="text-white/70 text-sm mb-4">
+            Perfect start time for your {runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run
+          </p>
+          
+          <div className="flex justify-center space-x-6 text-sm">
+            <div className="flex items-center space-x-1">
+              <Sun className="w-4 h-4 text-yellow-300" />
+              <span className="text-white/80">{bestTimeInWindow.conditions.temperature}°F</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-white/80">💨 {bestTimeInWindow.conditions.windSpeed} mph</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-white/80">☁️ {bestTimeInWindow.conditions.cloudCoverage}%</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-white/80">UV {bestTimeInWindow.conditions.uvIndex}</span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-6">
+          <div className="text-white/90 text-lg mb-2">
+            No suitable times available in your selected window for today
+          </div>
+          <p className="text-white/70 text-sm">
+            Try adjusting your time window or run duration above
+          </p>
+        </div>
+      )}
     </div>
   );
 };

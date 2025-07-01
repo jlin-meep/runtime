@@ -191,7 +191,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
             value={addressInput}
             onChange={(e) => setAddressInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
-            className="flex-1 bg-white/20 border-white/30 text-white placeholder-white"
+            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white"
           />
           <Button 
             onClick={searchAddress} 
