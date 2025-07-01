@@ -11,8 +11,8 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
 
-  // NOPA neighborhood coordinates (approximate center)
-  const nopaCoordinates: [number, number] = [-122.4194, 37.7749]; // San Francisco NOPA area
+  // Correct NOPA neighborhood coordinates (center of NOPA area)
+  const nopaCoordinates: [number, number] = [-122.4364, 37.7751]; // Proper NOPA location
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -24,7 +24,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken }) => {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: nopaCoordinates,
-      zoom: 14,
+      zoom: 15,
     });
 
     // Add a marker for NOPA location
