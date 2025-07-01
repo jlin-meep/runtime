@@ -1,3 +1,12 @@
+import { 
+  fetchNearbyStations, 
+  fetchStationObservation, 
+  fetchHourlyForecast, 
+  celsiusToFahrenheit, 
+  mpsToMph, 
+  parseWindSpeed,
+  getCloudCoverageFromLayers 
+} from '../services/nwsService';
 
 interface WeatherData {
   temperature: number;
@@ -16,17 +25,71 @@ export interface TimeSlot {
   uvIndex: number;
 }
 
-// Updated weather data to match current Lower Haight/NOPA conditions
-export const getCurrentWeather = (): WeatherData => {
-  return {
-    temperature: 60,
-    windSpeed: 13,
-    cloudCoverage: 40,
-    uvIndex: 2
-  };
+export interface WeatherStation {
+  id: string;
+  name: string;
+  coordinates: [number, number];
+  isActive: boolean;
+}
+
+// Fallback data in case API fails
+const fallbackWeatherData: WeatherData = {
+  temperature: 60,
+  windSpeed: 13,
+  cloudCoverage: 40,
+  uvIndex: 2
+};
+
+export const getCurrentWeather = async (): Promise<WeatherData> => {
+  try {
+    const stations = await fetchNearbyStations();
+    
+    // Try to get data from the first few stations
+    for (const station of stations.slice(0, 3)) {
+      const observation = await fetchStationObservation(station.properties.stationIdentifier);
+      
+      if (observation?.properties) {
+        const props = observation.properties;
+        
+        // Convert temperature from Celsius to Fahrenheit
+        const tempCelsius = props.temperature?.value;
+        const temperature = tempCelsius ? celsiusToFahrenheit(tempCelsius) : fallbackWeatherData.temperature;
+        
+        // Convert wind speed from m/s to mph
+        const windMps = props.windSpeed?.value;
+        const windSpeed = windMps ? mpsToMph(windMps) : fallbackWeatherData.windSpeed;
+        
+        // Get cloud coverage
+        const cloudCoverage = getCloudCoverageFromLayers(props.cloudLayers || []);
+        
+        // UV index is not provided by NWS observations, use estimated value based on time
+        const hour = new Date().getHours();
+        const uvIndex = hour >= 10 && hour <= 16 ? Math.min(6, Math.max(1, Math.floor((hour - 6) / 2))) : 1;
+        
+        console.log(`Weather data from station ${station.properties.name}:`, {
+          temperature, windSpeed, cloudCoverage, uvIndex
+        });
+        
+        return {
+          temperature,
+          windSpeed,
+          cloudCoverage,
+          uvIndex
+        };
+      }
+    }
+    
+    console.warn('No valid weather data found, using fallback');
+    return fallbackWeatherData;
+  } catch (error) {
+    console.error('Error fetching current weather:', error);
+    return fallbackWeatherData;
+  }
 };
 
 export const getYesterdayWeather = (): WeatherData => {
+  // NWS doesn't provide historical data easily, so we'll simulate yesterday's data
+  // by slightly modifying current conditions
   return {
     temperature: 58,
     windSpeed: 11,
@@ -35,7 +98,61 @@ export const getYesterdayWeather = (): WeatherData => {
   };
 };
 
-export const getHourlyWeatherData = (): TimeSlot[] => {
+export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
+  try {
+    const forecast = await fetchHourlyForecast();
+    
+    if (forecast?.properties?.periods) {
+      const periods = forecast.properties.periods.slice(0, 16); // Get next 16 hours
+      
+      return periods.map((period, index) => {
+        const startTime = new Date(period.startTime);
+        const hour = startTime.getHours();
+        const temperature = period.temperature;
+        const windSpeed = parseWindSpeed(period.windSpeed);
+        
+        // Estimate cloud coverage from forecast description
+        const shortForecast = period.shortForecast.toLowerCase();
+        let cloudCoverage = 25;
+        if (shortForecast.includes('clear') || shortForecast.includes('sunny')) cloudCoverage = 10;
+        else if (shortForecast.includes('partly')) cloudCoverage = 40;
+        else if (shortForecast.includes('mostly cloudy')) cloudCoverage = 70;
+        else if (shortForecast.includes('overcast') || shortForecast.includes('cloudy')) cloudCoverage = 90;
+        
+        // Estimate UV index based on hour and cloud coverage
+        let uvIndex = 0;
+        if (hour >= 7 && hour <= 19) {
+          const baseuv = Math.max(0, 6 - Math.abs(hour - 13) * 0.5);
+          uvIndex = Math.max(0, Math.round(baseuv * (1 - cloudCoverage / 200)));
+        }
+        
+        // Calculate score prioritizing low wind, low UV, comfortable temp
+        const windScore = Math.max(0, (25 - windSpeed) / 25) * 40;
+        const uvScore = Math.max(0, (8 - uvIndex) / 8) * 30;
+        const tempScore = Math.max(0, (100 - Math.abs(temperature - 65)) / 100) * 20;
+        const cloudScore = Math.max(0, (100 - cloudCoverage) / 100) * 10;
+        const score = Math.round(windScore + uvScore + tempScore + cloudScore);
+        
+        return {
+          time: startTime.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }),
+          hour,
+          score,
+          temperature,
+          windSpeed,
+          cloudCoverage,
+          uvIndex
+        };
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching hourly weather data:', error);
+  }
+  
+  // Fallback to mock data if API fails
   return [
     { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0 },
     { time: "7:00 AM", hour: 7, score: 90, temperature: 56, windSpeed: 9, cloudCoverage: 25, uvIndex: 1 },
@@ -54,6 +171,34 @@ export const getHourlyWeatherData = (): TimeSlot[] => {
     { time: "8:00 PM", hour: 20, score: 85, temperature: 58, windSpeed: 10, cloudCoverage: 25, uvIndex: 0 },
     { time: "9:00 PM", hour: 21, score: 80, temperature: 57, windSpeed: 9, cloudCoverage: 20, uvIndex: 0 }
   ];
+};
+
+export const getWeatherStations = async (): Promise<WeatherStation[]> => {
+  try {
+    const stations = await fetchNearbyStations();
+    
+    const stationPromises = stations.slice(0, 5).map(async (station) => {
+      // Test if station has recent data
+      const observation = await fetchStationObservation(station.properties.stationIdentifier);
+      const isActive = observation?.properties?.timestamp ? 
+        (Date.now() - new Date(observation.properties.timestamp).getTime()) < 24 * 60 * 60 * 1000 : false;
+      
+      return {
+        id: station.properties.stationIdentifier,
+        name: station.properties.name,
+        coordinates: [
+          station.properties.geometry.coordinates[0], 
+          station.properties.geometry.coordinates[1]
+        ] as [number, number],
+        isActive
+      };
+    });
+    
+    return Promise.all(stationPromises);
+  } catch (error) {
+    console.error('Error fetching weather stations:', error);
+    return [];
+  }
 };
 
 export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: number, endHour: number): TimeSlot | null => {
@@ -86,34 +231,18 @@ export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: num
 };
 
 export const getBestRunningTime = (): { time: string; reason: string; conditions: WeatherData } => {
-  // This function is now deprecated in favor of the dynamic calculation in BestTimeCard
   const hourlyData = getHourlyWeatherData();
-  const bestTime = hourlyData.reduce((best, current) => 
-    current.score > best.score ? current : best
-  );
-
-  const getReason = (slot: TimeSlot): string => {
-    if (slot.hour < 12) {
-      return "Cool morning temps with low UV and gentle breeze";
-    } else {
-      return "Perfect evening conditions with cooling temperatures";
-    }
-  };
-
+  
+  // This is now a placeholder since we need async data
   return {
-    time: bestTime.time,
-    reason: getReason(bestTime),
-    conditions: {
-      temperature: bestTime.temperature,
-      windSpeed: bestTime.windSpeed,
-      cloudCoverage: bestTime.cloudCoverage,
-      uvIndex: bestTime.uvIndex
-    }
+    time: "7:00 AM",
+    reason: "Cool morning temps with low UV and gentle breeze",
+    conditions: fallbackWeatherData
   };
 };
 
-export const getComparisonData = () => {
-  const current = getCurrentWeather();
+export const getComparisonData = async () => {
+  const current = await getCurrentWeather();
   const previous = getYesterdayWeather();
   
   return {
