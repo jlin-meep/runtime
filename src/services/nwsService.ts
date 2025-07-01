@@ -63,12 +63,17 @@ interface NWSForecast {
 const BASE_URL = 'https://api.weather.gov';
 const USER_AGENT = 'NOPA-Runner-App (contact@example.com)';
 
-// NOPA coordinates
-const NOPA_LAT = 37.7751;
-const NOPA_LON = -122.4364;
+// Store current location - default to NOPA
+let currentLocation: [number, number] = [-122.4364, 37.7751];
+
+export const setCurrentLocation = (coordinates: [number, number]) => {
+  currentLocation = coordinates;
+  console.log('NWS service location updated to:', coordinates);
+};
 
 export const fetchNWSPoint = async (): Promise<NWSPoint> => {
-  const response = await fetch(`${BASE_URL}/points/${NOPA_LAT},${NOPA_LON}`, {
+  const [lon, lat] = currentLocation;
+  const response = await fetch(`${BASE_URL}/points/${lat},${lon}`, {
     headers: {
       'User-Agent': USER_AGENT,
     },

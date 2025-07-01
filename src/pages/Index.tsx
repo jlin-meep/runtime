@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import Map from '../components/Map';
-import { getCurrentWeather, getHourlyWeatherData, getComparisonData } from '../utils/weatherService';
+import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
 
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -17,9 +16,45 @@ const Index = () => {
   // Get Mapbox token from localStorage
   const mapboxToken = localStorage.getItem('mapbox_token') || '';
 
+  const reverseGeocode = async (coordinates: [number, number]): Promise<string> => {
+    if (!mapboxToken) return 'Unknown Location';
+    
+    try {
+      const [lng, lat] = coordinates;
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=neighborhood,locality,place`
+      );
+      
+      if (!response.ok) throw new Error('Reverse geocoding failed');
+      
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        // Try to get neighborhood first, then locality
+        const neighborhood = data.features.find(f => f.place_type.includes('neighborhood'));
+        const locality = data.features.find(f => f.place_type.includes('locality'));
+        
+        if (neighborhood) {
+          return neighborhood.text + (locality ? `, ${locality.text}` : '');
+        } else if (locality) {
+          return locality.place_name;
+        } else {
+          return data.features[0].place_name;
+        }
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+    }
+    
+    return 'Unknown Location';
+  };
+
   const loadWeatherData = async () => {
     try {
-      console.log('Loading weather data for location:', locationName);
+      console.log('Loading weather data for location:', locationName, userLocation);
+      
+      // Update weather service location
+      updateWeatherLocation(userLocation);
       
       const [current, hourly, comparison] = await Promise.all([
         getCurrentWeather(),
@@ -31,7 +66,7 @@ const Index = () => {
       setHourlyData(hourly);
       setComparisonData(comparison);
       
-      console.log('Weather data loaded successfully');
+      console.log('Weather data loaded successfully for:', locationName);
     } catch (error) {
       console.error('Error loading weather data:', error);
     } finally {
@@ -43,14 +78,21 @@ const Index = () => {
     loadWeatherData();
   }, [userLocation]); // Reload weather data when location changes
 
-  const handleLocationChange = (coordinates: [number, number], address?: string) => {
+  const handleLocationChange = async (coordinates: [number, number], address?: string) => {
+    console.log('Location change requested:', coordinates, address);
+    setLoading(true);
     setUserLocation(coordinates);
+    
+    // Update location name
     if (address) {
       setLocationName(address);
+    } else {
+      // Use reverse geocoding to get location name
+      const geocodedName = await reverseGeocode(coordinates);
+      setLocationName(geocodedName);
     }
-    console.log('Location updated:', coordinates, address);
-    // Note: In a full implementation, you'd want to update the weather service 
-    // to use the new coordinates for finding nearby stations
+    
+    console.log('Location updated:', coordinates, address || await reverseGeocode(coordinates));
   };
 
   if (loading) {
@@ -88,7 +130,7 @@ const Index = () => {
 
           {/* Best Time Section */}
           <div className="col-span-full">
-            <BestTimeCard hourlyData={hourlyData} />
+            <BestTimeCard hourlyData={hourlyData} locationName={locationName} />
           </div>
 
           {/* Weather Stats Grid */}
@@ -111,7 +153,7 @@ const Index = () => {
               🌦️ Weather data from National Weather Service stations near your location
             </p>
             <p className="text-white/70 text-xs">
-              Recommendations based on current conditions and hourly forecasts
+              Recommendations based on current conditions and hourly forecasts for {locationName}
             </p>
           </div>
         </div>

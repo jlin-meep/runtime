@@ -5,7 +5,8 @@ import {
   celsiusToFahrenheit, 
   mpsToMph, 
   parseWindSpeed,
-  getCloudCoverageFromLayers 
+  getCloudCoverageFromLayers,
+  setCurrentLocation
 } from '../services/nwsService';
 
 interface WeatherData {
@@ -38,6 +39,11 @@ const fallbackWeatherData: WeatherData = {
   windSpeed: 13,
   cloudCoverage: 40,
   uvIndex: 2
+};
+
+// Add location update function
+export const updateWeatherLocation = (coordinates: [number, number]) => {
+  setCurrentLocation(coordinates);
 };
 
 export const getCurrentWeather = async (): Promise<WeatherData> => {

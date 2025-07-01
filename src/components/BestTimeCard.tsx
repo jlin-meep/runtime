@@ -15,9 +15,10 @@ interface TimeSlot {
 
 interface BestTimeCardProps {
   hourlyData: TimeSlot[];
+  locationName?: string;
 }
 
-const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData }) => {
+const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 'Your Location' }) => {
   const [timeWindow, setTimeWindow] = useState([6, 20]); // Default: 6 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
 
@@ -85,7 +86,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData }) => {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Best Time to Start Running</h2>
-            <p className="text-white/80">NOPA, San Francisco</p>
+            <p className="text-white/80">{locationName}</p>
           </div>
         </div>
 
