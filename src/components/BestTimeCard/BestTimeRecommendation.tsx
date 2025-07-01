@@ -77,20 +77,13 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <PopoverContent 
             className={`bg-white/95 backdrop-blur-sm border border-white/30 p-4 ${
               isMobile 
-                ? 'w-[90vw] max-w-[320px] fixed left-1/2 transform -translate-x-1/2' 
+                ? 'w-[calc(100vw-2rem)] max-w-[320px]' 
                 : 'w-80'
             }`}
-            align={isMobile ? "center" : "end"}
+            align="end"
             side="top"
             sideOffset={8}
-            avoidCollisions={!isMobile}
-            style={isMobile ? {
-              position: 'fixed',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              top: 'auto',
-              bottom: '100px'
-            } : undefined}
+            avoidCollisions={true}
           >
             {contentInfo}
           </PopoverContent>
