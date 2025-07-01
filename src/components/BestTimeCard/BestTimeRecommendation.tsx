@@ -63,13 +63,7 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
             align={isMobile ? "center" : "end"}
             side="top"
             sideOffset={8}
-            style={isMobile ? {
-              position: 'fixed',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 9999
-            } : undefined}
+            alignOffset={isMobile ? -120 : 0}
           >
             <div className="space-y-3">
               <p className="text-sm text-gray-800 font-medium">
