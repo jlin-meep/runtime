@@ -19,7 +19,7 @@ const TimeWindowControls: React.FC<TimeWindowControlsProps> = ({
   setRunDuration
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-row gap-4">
       {/* Run Duration Selector */}
       <div className="flex-1 p-3 bg-white/10 rounded-xl border border-white/20">
         <div className="flex items-center space-x-2 mb-2">
@@ -27,7 +27,7 @@ const TimeWindowControls: React.FC<TimeWindowControlsProps> = ({
           <h3 className="text-white font-semibold text-sm">Run Duration</h3>
         </div>
         <Select value={runDuration.toString()} onValueChange={(value) => setRunDuration(parseFloat(value))}>
-          <SelectTrigger className="w-full sm:w-24 bg-white/10 border-white/20 text-white text-xs">
+          <SelectTrigger className="w-full bg-white/10 border-white/20 text-white text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -40,7 +40,7 @@ const TimeWindowControls: React.FC<TimeWindowControlsProps> = ({
       </div>
 
       {/* Time Window Slider */}
-      <div className="flex-1 sm:flex-2 p-3 bg-white/10 rounded-xl border border-white/20">
+      <div className="flex-1 p-3 bg-white/10 rounded-xl border border-white/20">
         <h3 className="text-white font-semibold text-sm mb-3">Available Window</h3>
         <div className="relative mb-4">
           <Slider

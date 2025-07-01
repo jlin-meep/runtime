@@ -3,6 +3,7 @@ import React from 'react';
 import { Sun, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { WeatherData } from '../../utils/weatherTypes';
+import { useIsMobile } from '../../hooks/use-mobile';
 
 interface BestTimeRecommendationProps {
   bestTime: {
@@ -20,10 +21,12 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   bestTime,
   runDuration
 }) => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="text-center py-4 md:py-6">
       <div className="text-4xl md:text-6xl font-bold text-white mb-2">
-        {bestTime.isNow ? `Now (${bestTime.originalTime})` : bestTime.time}
+        {bestTime.isNow ? `Now ${bestTime.originalTime}` : bestTime.time}
       </div>
       <p className="text-white/90 text-base md:text-lg mb-2 px-2">
         {bestTime.contextualInsight || bestTime.reason}
@@ -57,7 +60,7 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           </PopoverTrigger>
           <PopoverContent 
             className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
-            align="end"
+            align={isMobile ? "center" : "end"}
             side="top"
             sideOffset={8}
           >

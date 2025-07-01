@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { TimeSlot, WeatherData } from '../utils/weatherTypes';
 import { useBestTimeLogic } from '../hooks/useBestTimeLogic';
-import { useIsMobile } from '../hooks/use-mobile';
 import BestTimeHeader from './BestTimeCard/BestTimeHeader';
 import TimeWindowControls from './BestTimeCard/TimeWindowControls';
 import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
@@ -26,7 +25,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
   const [isLocationSectionOpen, setIsLocationSectionOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const bestTimeInWindow = useBestTimeLogic({
     hourlyData,
@@ -50,15 +48,13 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           />
         </BestTimeHeader>
 
-        {/* Controls - Side by side on mobile and larger screens */}
-        <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          <TimeWindowControls
-            timeWindow={timeWindow}
-            setTimeWindow={setTimeWindow}
-            runDuration={runDuration}
-            setRunDuration={setRunDuration}
-          />
-        </div>
+        {/* Controls - Side by side on all screen sizes */}
+        <TimeWindowControls
+          timeWindow={timeWindow}
+          setTimeWindow={setTimeWindow}
+          runDuration={runDuration}
+          setRunDuration={setRunDuration}
+        />
       </div>
       
       {bestTimeInWindow ? (
