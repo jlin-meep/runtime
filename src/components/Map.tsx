@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -152,26 +153,17 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
     return (
       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
         <h3 className="text-xl font-semibold text-white mb-4">Set Your Running Location</h3>
-        <div className="bg-white/10 rounded-lg p-4">
-          <p className="text-white text-sm mb-3">
-            To display the interactive map, please enter your Mapbox public token:
-          </p>
-          <input
-            type="text"
-            placeholder="Enter Mapbox public token..."
-            className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const token = (e.target as HTMLInputElement).value;
-                if (token) {
-                  localStorage.setItem('mapbox_token', token);
-                  window.location.reload();
-                }
-              }
-            }}
-          />
-          <p className="text-white text-xs mt-2">
-            Get your free token at <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a> • Press Enter to save
+        <div className="bg-white/10 rounded-lg p-4 h-64 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-4xl mb-2">🗺️</div>
+            <p className="text-white/90 font-medium">Interactive Map</p>
+            <p className="text-white/70 text-sm">Map functionality requires configuration</p>
+          </div>
+        </div>
+        <div className="text-white text-sm mt-3">
+          <p className="text-center">
+            <MapPin className="w-4 h-4 text-red-400 inline mr-1" />
+            Currently showing weather for NOPA, San Francisco
           </p>
         </div>
       </div>
@@ -191,7 +183,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
             value={addressInput}
             onChange={(e) => setAddressInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
-            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white"
+            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/70"
           />
           <Button 
             onClick={searchAddress} 
@@ -221,7 +213,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
           <MapPin className="w-4 h-4 text-red-400" />
           Click anywhere on the map or drag the pin to set your location
         </p>
-        <p className="text-center text-white text-xs">
+        <p className="text-center text-white/70 text-xs">
           Weather data will be sourced from the nearest available station
         </p>
       </div>
