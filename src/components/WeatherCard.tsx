@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { Cloud, Sun, Wind, Clock } from 'lucide-react';
+import { Cloud, Sun, Wind } from 'lucide-react';
 
 interface WeatherData {
   temperature: number;
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
-  feelsLike?: number;
 }
 
 interface WeatherCardProps {
@@ -37,14 +36,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           </div>
           <div>
             <p className="text-white/80 text-sm">Temperature</p>
-            <p className="text-white font-semibold text-lg">
-              {Math.round(data.temperature)}°F
-              {data.feelsLike && Math.round(data.feelsLike) !== Math.round(data.temperature) && (
-                <span className="text-white/70 text-sm block">
-                  Feels like {Math.round(data.feelsLike)}°F
-                </span>
-              )}
-            </p>
+            <p className="text-white font-semibold text-lg">{Math.round(data.temperature)}°F</p>
           </div>
         </div>
 

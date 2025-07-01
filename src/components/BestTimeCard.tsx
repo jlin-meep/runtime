@@ -19,7 +19,6 @@ interface WeatherData {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
-  feelsLike: number;
 }
 
 interface BestTimeCardProps {
@@ -74,7 +73,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
         // Slightly vary the score for half-hour slots
         score: slot.score + (Math.random() - 0.5) * 0.1,
         temperature: slot.temperature + (Math.random() - 0.5) * 2,
-        feelsLike: (slot.feelsLike || slot.temperature) + (Math.random() - 0.5) * 2,
         windSpeed: Math.max(0, slot.windSpeed + (Math.random() - 0.5) * 1),
         cloudCoverage: Math.max(0, Math.min(100, slot.cloudCoverage + (Math.random() - 0.5) * 10))
       });
@@ -116,19 +114,17 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 
     const getReason = (slot: TimeSlot, conditions: WeatherData): string => {
       const temp = Math.round(conditions.temperature);
-      const feelsLike = Math.round(conditions.feelsLike || conditions.temperature);
-      const feelsLikeText = feelsLike !== temp ? ` (feels like ${feelsLike}°F)` : '';
       
       if (slot.hour < 10) {
-        return `Cool early morning at ${temp}°F${feelsLikeText} with low UV and gentle breeze`;
+        return `Cool early morning at ${temp}°F with low UV and gentle breeze`;
       } else if (slot.hour < 12) {
-        return `Pleasant morning conditions at ${temp}°F${feelsLikeText} with comfortable temperatures`;
+        return `Pleasant morning conditions at ${temp}°F with comfortable temperatures`;
       } else if (slot.hour < 15) {
-        return `Midday conditions at ${temp}°F${feelsLikeText} with moderate temperatures`;
+        return `Midday conditions at ${temp}°F with moderate temperatures`;
       } else if (slot.hour < 18) {
-        return `Warm afternoon at ${temp}°F${feelsLikeText} with good running conditions`;
+        return `Warm afternoon at ${temp}°F with good running conditions`;
       } else {
-        return `Perfect evening conditions at ${temp}°F${feelsLikeText} with cooling temperatures`;
+        return `Perfect evening conditions at ${temp}°F with cooling temperatures`;
       }
     };
 
@@ -144,8 +140,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       temperature: bestTime.temperature,
       windSpeed: bestTime.windSpeed,
       cloudCoverage: bestTime.cloudCoverage,
-      uvIndex: bestTime.uvIndex,
-      feelsLike: bestTime.feelsLike || bestTime.temperature
+      uvIndex: bestTime.uvIndex
     };
 
     return {

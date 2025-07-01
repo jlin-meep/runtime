@@ -1,4 +1,3 @@
-
 import { 
   fetchNearbyStations, 
   fetchStationObservation, 
@@ -15,7 +14,6 @@ interface WeatherData {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
-  feelsLike: number;
 }
 
 export interface TimeSlot {
@@ -27,7 +25,6 @@ export interface TimeSlot {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
-  feelsLike: number;
 }
 
 export interface WeatherStation {
@@ -36,26 +33,6 @@ export interface WeatherStation {
   coordinates: [number, number];
   isActive: boolean;
 }
-
-// Calculate "feels like" temperature using heat index/wind chill
-const calculateFeelsLike = (temp: number, windSpeed: number, humidity: number = 50): number => {
-  // If temperature is below 50°F, use wind chill formula
-  if (temp <= 50 && windSpeed > 3) {
-    return 35.74 + (0.6215 * temp) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * temp * Math.pow(windSpeed, 0.16));
-  }
-  
-  // If temperature is above 80°F, use heat index formula
-  if (temp >= 80) {
-    const rh = humidity;
-    const heatIndex = -42.379 + 2.04901523 * temp + 10.14333127 * rh - 0.22475541 * temp * rh - 
-                     0.00683783 * temp * temp - 0.05481717 * rh * rh + 0.00122874 * temp * temp * rh + 
-                     0.00085282 * temp * rh * rh - 0.00000199 * temp * temp * rh * rh;
-    return heatIndex;
-  }
-  
-  // For moderate temperatures, feels like equals actual temperature
-  return temp;
-};
 
 // Enhanced UV Index calculation with EPA-style logic
 const calculateUVIndex = async (lat: number, lng: number): Promise<number> => {
@@ -106,8 +83,7 @@ const fallbackWeatherData: WeatherData = {
   temperature: 60,
   windSpeed: 13,
   cloudCoverage: 40,
-  uvIndex: 2,
-  feelsLike: 58
+  uvIndex: 2
 };
 
 // Add location update function
@@ -134,12 +110,6 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         const windMps = props.windSpeed?.value;
         const windSpeed = windMps ? mpsToMph(windMps) : fallbackWeatherData.windSpeed;
         
-        // Use default humidity since NWS observation doesn't always include it
-        const humidity = 50; // Default humidity for feels-like calculation
-        
-        // Calculate feels like temperature
-        const feelsLike = Math.round(calculateFeelsLike(temperature, windSpeed, humidity));
-        
         // Get cloud coverage
         const cloudCoverage = getCloudCoverageFromLayers(props.cloudLayers || []);
         
@@ -148,15 +118,14 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         const uvIndex = await calculateUVIndex(coordinates[1], coordinates[0]);
         
         console.log(`Weather data from station ${station.properties.name}:`, {
-          temperature, windSpeed, cloudCoverage, uvIndex, feelsLike
+          temperature, windSpeed, cloudCoverage, uvIndex
         });
         
         return {
           temperature,
           windSpeed,
           cloudCoverage,
-          uvIndex,
-          feelsLike
+          uvIndex
         };
       }
     }
@@ -176,8 +145,7 @@ export const getYesterdayWeather = (): WeatherData => {
     temperature: 58,
     windSpeed: 11,
     cloudCoverage: 35,
-    uvIndex: 3,
-    feelsLike: 56
+    uvIndex: 3
   };
 };
 
@@ -193,9 +161,6 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         const hour = startTime.getHours();
         const temperature = period.temperature;
         const windSpeed = parseWindSpeed(period.windSpeed);
-        
-        // Calculate feels like for hourly data
-        const feelsLike = Math.round(calculateFeelsLike(temperature, windSpeed));
         
         // Estimate cloud coverage from forecast description
         const shortForecast = period.shortForecast.toLowerCase();
@@ -230,8 +195,7 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
           temperature,
           windSpeed,
           cloudCoverage,
-          uvIndex,
-          feelsLike
+          uvIndex
         };
       });
     }
@@ -241,22 +205,22 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
   
   // Fallback to mock data if API fails
   return [
-    { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0, feelsLike: 52 },
-    { time: "7:00 AM", hour: 7, score: 90, temperature: 56, windSpeed: 9, cloudCoverage: 25, uvIndex: 1, feelsLike: 54 },
-    { time: "8:00 AM", hour: 8, score: 80, temperature: 58, windSpeed: 11, cloudCoverage: 35, uvIndex: 2, feelsLike: 55 },
-    { time: "9:00 AM", hour: 9, score: 75, temperature: 60, windSpeed: 12, cloudCoverage: 40, uvIndex: 2, feelsLike: 57 },
-    { time: "10:00 AM", hour: 10, score: 70, temperature: 62, windSpeed: 13, cloudCoverage: 45, uvIndex: 3, feelsLike: 58 },
-    { time: "11:00 AM", hour: 11, score: 65, temperature: 64, windSpeed: 14, cloudCoverage: 50, uvIndex: 4, feelsLike: 60 },
-    { time: "12:00 PM", hour: 12, score: 60, temperature: 66, windSpeed: 15, cloudCoverage: 55, uvIndex: 5, feelsLike: 62 },
-    { time: "1:00 PM", hour: 13, score: 55, temperature: 68, windSpeed: 16, cloudCoverage: 60, uvIndex: 5, feelsLike: 65 },
-    { time: "2:00 PM", hour: 14, score: 50, temperature: 69, windSpeed: 17, cloudCoverage: 65, uvIndex: 6, feelsLike: 67 },
-    { time: "3:00 PM", hour: 15, score: 55, temperature: 68, windSpeed: 16, cloudCoverage: 60, uvIndex: 5, feelsLike: 65 },
-    { time: "4:00 PM", hour: 16, score: 60, temperature: 66, windSpeed: 15, cloudCoverage: 55, uvIndex: 4, feelsLike: 62 },
-    { time: "5:00 PM", hour: 17, score: 70, temperature: 64, windSpeed: 14, cloudCoverage: 45, uvIndex: 3, feelsLike: 60 },
-    { time: "6:00 PM", hour: 18, score: 82, temperature: 62, windSpeed: 12, cloudCoverage: 35, uvIndex: 2, feelsLike: 58 },
-    { time: "7:00 PM", hour: 19, score: 88, temperature: 60, windSpeed: 11, cloudCoverage: 30, uvIndex: 1, feelsLike: 57 },
-    { time: "8:00 PM", hour: 20, score: 85, temperature: 58, windSpeed: 10, cloudCoverage: 25, uvIndex: 0, feelsLike: 55 },
-    { time: "9:00 PM", hour: 21, score: 80, temperature: 57, windSpeed: 9, cloudCoverage: 20, uvIndex: 0, feelsLike: 54 }
+    { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0 },
+    { time: "7:00 AM", hour: 7, score: 90, temperature: 56, windSpeed: 9, cloudCoverage: 25, uvIndex: 1 },
+    { time: "8:00 AM", hour: 8, score: 80, temperature: 58, windSpeed: 11, cloudCoverage: 35, uvIndex: 2 },
+    { time: "9:00 AM", hour: 9, score: 75, temperature: 60, windSpeed: 12, cloudCoverage: 40, uvIndex: 2 },
+    { time: "10:00 AM", hour: 10, score: 70, temperature: 62, windSpeed: 13, cloudCoverage: 45, uvIndex: 3 },
+    { time: "11:00 AM", hour: 11, score: 65, temperature: 64, windSpeed: 14, cloudCoverage: 50, uvIndex: 4 },
+    { time: "12:00 PM", hour: 12, score: 60, temperature: 66, windSpeed: 15, cloudCoverage: 55, uvIndex: 5 },
+    { time: "1:00 PM", hour: 13, score: 55, temperature: 68, windSpeed: 16, cloudCoverage: 60, uvIndex: 5 },
+    { time: "2:00 PM", hour: 14, score: 50, temperature: 69, windSpeed: 17, cloudCoverage: 65, uvIndex: 6 },
+    { time: "3:00 PM", hour: 15, score: 55, temperature: 68, windSpeed: 16, cloudCoverage: 60, uvIndex: 5 },
+    { time: "4:00 PM", hour: 16, score: 60, temperature: 66, windSpeed: 15, cloudCoverage: 55, uvIndex: 4 },
+    { time: "5:00 PM", hour: 17, score: 70, temperature: 64, windSpeed: 14, cloudCoverage: 45, uvIndex: 3 },
+    { time: "6:00 PM", hour: 18, score: 82, temperature: 62, windSpeed: 12, cloudCoverage: 35, uvIndex: 2 },
+    { time: "7:00 PM", hour: 19, score: 88, temperature: 60, windSpeed: 11, cloudCoverage: 30, uvIndex: 1 },
+    { time: "8:00 PM", hour: 20, score: 85, temperature: 58, windSpeed: 10, cloudCoverage: 25, uvIndex: 0 },
+    { time: "9:00 PM", hour: 21, score: 80, temperature: 57, windSpeed: 9, cloudCoverage: 20, uvIndex: 0 }
   ];
 };
 
