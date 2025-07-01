@@ -26,7 +26,7 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   return (
     <div className="text-center py-4 md:py-6">
       <div className="text-4xl md:text-6xl font-bold text-white mb-2">
-        {bestTime.isNow ? `Now ${bestTime.originalTime}` : bestTime.time}
+        {bestTime.isNow ? `Now (${bestTime.originalTime})` : bestTime.time}
       </div>
       <p className="text-white/90 text-base md:text-lg mb-2 px-2">
         {bestTime.contextualInsight || bestTime.reason}
@@ -61,7 +61,7 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <PopoverContent 
             className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
             align={isMobile ? "center" : "end"}
-            side="top"
+            side={isMobile ? "bottom" : "top"}
             sideOffset={8}
           >
             <div className="space-y-3">
