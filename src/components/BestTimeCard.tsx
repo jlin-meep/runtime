@@ -45,7 +45,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           locationName={locationName}
           isLocationSectionOpen={isLocationSectionOpen}
           onToggleLocationSection={() => setIsLocationSectionOpen(!isLocationSectionOpen)}
-          forecastRange={forecastRange}
         >
           <LocationSelector 
             onLocationChange={onLocationChange}
