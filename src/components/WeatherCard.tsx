@@ -25,6 +25,18 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
 
   const uvInfo = getUVLevel(data.uvIndex);
 
+  // Mock forecast data - in a real app, this would come from props or API
+  const forecast = {
+    tempHigh: data.temperature + Math.floor(Math.random() * 8) + 2,
+    tempLow: data.temperature - Math.floor(Math.random() * 8) - 2,
+    windHigh: data.windSpeed + Math.floor(Math.random() * 5) + 2,
+    windLow: Math.max(0, data.windSpeed - Math.floor(Math.random() * 5) - 2),
+    cloudHigh: Math.min(100, data.cloudCoverage + Math.floor(Math.random() * 20) + 5),
+    cloudLow: Math.max(0, data.cloudCoverage - Math.floor(Math.random() * 20) - 5),
+    uvHigh: Math.min(11, data.uvIndex + Math.floor(Math.random() * 2) + 1),
+    uvLow: Math.max(0, data.uvIndex - Math.floor(Math.random() * 2) - 1)
+  };
+
   return (
     <div className={`bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`}>
       <h3 className="text-xl font-semibold text-white mb-4">{title}</h3>
@@ -37,6 +49,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           <div>
             <p className="text-white/80 text-sm">Temperature</p>
             <p className="text-white font-semibold text-lg">{Math.round(data.temperature)}°F</p>
+            <p className="text-white/60 text-xs">H: {forecast.tempHigh}° L: {forecast.tempLow}°</p>
           </div>
         </div>
 
@@ -47,6 +60,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           <div>
             <p className="text-white/80 text-sm">Wind Speed</p>
             <p className="text-white font-semibold text-lg">{Math.round(data.windSpeed)} mph</p>
+            <p className="text-white/60 text-xs">H: {forecast.windHigh} L: {forecast.windLow} mph</p>
           </div>
         </div>
 
@@ -57,6 +71,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           <div>
             <p className="text-white/80 text-sm">Cloud Coverage</p>
             <p className="text-white font-semibold text-lg">{Math.round(data.cloudCoverage)}%</p>
+            <p className="text-white/60 text-xs">H: {forecast.cloudHigh}% L: {forecast.cloudLow}%</p>
           </div>
         </div>
 
@@ -67,6 +82,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           <div>
             <p className="text-white/80 text-sm">UV Index</p>
             <p className={`font-semibold text-lg ${uvInfo.color}`}>{data.uvIndex} ({uvInfo.level})</p>
+            <p className="text-white/60 text-xs">H: {forecast.uvHigh} L: {forecast.uvLow}</p>
           </div>
         </div>
       </div>
