@@ -75,6 +75,11 @@ export const useBestTimeLogic = ({
       current.score > best.score ? current : best
     );
 
+    // Find the worst time in the window for comparison
+    const worstTime = filteredData.reduce((worst, current) => 
+      current.score < worst.score ? current : worst
+    );
+
     console.log('🎯 Best time analysis:', {
       time: bestTime.time,
       score: bestTime.score,
@@ -88,36 +93,66 @@ export const useBestTimeLogic = ({
       currentWeather: currentWeather
     });
 
-    const getDetailedReason = (slot: TimeSlot, conditions: WeatherData): string => {
-      const temp = Math.round(conditions.temperature);
+    const getContextualInsight = (slot: TimeSlot, allSlots: TimeSlot[], worstSlot: TimeSlot): string => {
+      const temp = Math.round(slot.temperature);
+      const wind = Math.round(slot.windSpeed);
+      const uv = slot.uvIndex;
       
-      let reason = `${temp}°F with ${Math.round(conditions.windSpeed)} mph winds`;
+      // Analyze trends throughout the day
+      const laterSlots = allSlots.filter(s => s.hour > slot.hour);
+      const earlierSlots = allSlots.filter(s => s.hour < slot.hour);
       
-      // UV analysis
-      if (conditions.uvIndex <= 2) {
-        reason += ` and low UV exposure`;
-      } else if (conditions.uvIndex <= 5) {
-        reason += ` and moderate UV levels`;
-      } else if (conditions.uvIndex > 7) {
-        reason += ` but high UV exposure (UV ${conditions.uvIndex})`;
-      }
+      let insight = `Optimal conditions at ${temp}°F`;
       
-      // Compare with current conditions if available
-      if (currentWeather && slot.hour !== currentHour) {
-        if (conditions.windSpeed < currentWeather.windSpeed - 3) {
-          reason += ` - winds will calm down from current ${currentWeather.windSpeed} mph`;
-        } else if (conditions.windSpeed > currentWeather.windSpeed + 3) {
-          reason += ` - winds will pick up from current ${currentWeather.windSpeed} mph`;
-        }
-        
-        if (conditions.uvIndex < currentWeather.uvIndex - 1) {
-          reason += ` with lower UV than now (${currentWeather.uvIndex})`;
-        } else if (conditions.uvIndex > currentWeather.uvIndex + 2) {
-          reason += ` with higher UV than now (${currentWeather.uvIndex})`;
+      // Wind trend analysis
+      if (laterSlots.length > 0) {
+        const avgLaterWind = laterSlots.reduce((sum, s) => sum + s.windSpeed, 0) / laterSlots.length;
+        if (avgLaterWind > wind + 3) {
+          insight += ` before winds increase to ${Math.round(avgLaterWind)} mph later`;
+        } else if (avgLaterWind < wind - 2) {
+          insight += ` as winds will calm down later`;
         }
       }
       
-      return reason;
+      // UV trend analysis
+      if (laterSlots.length > 0) {
+        const maxLaterUV = Math.max(...laterSlots.map(s => s.uvIndex));
+        if (maxLaterUV > uv + 2) {
+          insight += ` and before UV peaks at ${maxLaterUV}`;
+        }
+      }
+      
+      // Temperature comfort analysis
+      if (laterSlots.length > 0) {
+        const avgLaterTemp = laterSlots.reduce((sum, s) => sum + s.temperature, 0) / laterSlots.length;
+        if (avgLaterTemp > temp + 5) {
+          insight += ` before it gets warmer (${Math.round(avgLaterTemp)}°F)`;
+        } else if (avgLaterTemp < temp - 5) {
+          insight += ` while temperatures are still comfortable`;
+        }
+      }
+      
+      return insight;
+    };
+
+    const getWorstTimeWarning = (worstSlot: TimeSlot): string => {
+      const worstWind = Math.round(worstSlot.windSpeed);
+      const worstTemp = Math.round(worstSlot.temperature);
+      const worstUV = worstSlot.uvIndex;
+      
+      let warning = `Avoid ${worstSlot.time}`;
+      
+      if (worstWind > 15) {
+        warning += ` (${worstWind} mph winds)`;
+      } else if (worstUV > 7) {
+        warning += ` (UV ${worstUV})`;
+      } else if (worstTemp > 75 || worstTemp < 50) {
+        warning += ` (${worstTemp}°F)`;
+      } else {
+        warning += ` (poor overall conditions)`;
+      }
+      
+      return warning;
     };
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
@@ -139,7 +174,9 @@ export const useBestTimeLogic = ({
       time: displayTime,
       originalTime: bestTime.time,
       isNow,
-      reason: getDetailedReason(bestTime, conditions),
+      reason: `${Math.round(conditions.temperature)}°F with ${Math.round(conditions.windSpeed)} mph winds`,
+      contextualInsight: getContextualInsight(bestTime, filteredData, worstTime),
+      worstTimeWarning: filteredData.length > 1 ? getWorstTimeWarning(worstTime) : undefined,
       conditions,
       scoreBreakdown: bestTime.scoreBreakdown,
       allFilteredOptions: filteredData.map(slot => ({
