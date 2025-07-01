@@ -39,19 +39,24 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ bestTime, reason, condition
 
         {/* Compact Time Window Slider */}
         <div className="w-64 p-3 bg-white/10 rounded-xl border border-white/20">
-          <h3 className="text-white font-semibold text-sm mb-2">Running Window</h3>
-          <div className="space-y-2">
+          <h3 className="text-white font-semibold text-sm mb-3">Running Window</h3>
+          <div className="relative">
             <Slider
               value={timeWindow}
               onValueChange={setTimeWindow}
               max={23}
               min={0}
               step={1}
-              className="w-full"
+              className="w-full mb-8"
             />
-            <div className="flex justify-between text-white/80 text-xs px-1">
-              <span>{formatTime(timeWindow[0])}</span>
-              <span>{formatTime(timeWindow[1])}</span>
+            {/* Time labels positioned under each handle */}
+            <div className="absolute top-6 left-0 right-0 flex justify-between px-2">
+              <div className="relative" style={{ left: `${(timeWindow[0] / 23) * 100}%`, transform: 'translateX(-50%)' }}>
+                <span className="text-white/80 text-xs whitespace-nowrap">{formatTime(timeWindow[0])}</span>
+              </div>
+              <div className="relative" style={{ left: `${(timeWindow[1] / 23) * 100}%`, transform: 'translateX(-50%)' }}>
+                <span className="text-white/80 text-xs whitespace-nowrap">{formatTime(timeWindow[1])}</span>
+              </div>
             </div>
           </div>
         </div>
