@@ -200,7 +200,7 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Set Your Running Location</h3>
       
       {mapError && (
