@@ -7,18 +7,20 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 
 interface MapProps {
-  mapboxToken?: string;
   onLocationChange?: (coordinates: [number, number], address?: string) => void;
   initialLocation?: [number, number];
 }
 
-const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocation = [-122.4364, 37.7751] }) => {
+const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.4364, 37.7751] }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [currentLocation, setCurrentLocation] = useState<[number, number]>(initialLocation);
   const [addressInput, setAddressInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Hardcoded Mapbox token - replace with your actual token
+  const mapboxToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbTR1aXNvcTcwMDFhMmpzZDVma3FsOGQzIn0.BM_zHpJyQJaLnNALAjE5jA';
 
   // Update current location when initialLocation prop changes
   useEffect(() => {
@@ -148,27 +150,6 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
       setLoading(false);
     }
   };
-
-  if (!mapboxToken) {
-    return (
-      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
-        <h3 className="text-xl font-semibold text-white mb-4">Set Your Running Location</h3>
-        <div className="bg-white/10 rounded-lg p-4 h-64 flex items-center justify-center">
-          <div className="text-center text-white">
-            <div className="text-4xl mb-2">🗺️</div>
-            <p className="text-white/90 font-medium">Interactive Map</p>
-            <p className="text-white/70 text-sm">Map functionality requires configuration</p>
-          </div>
-        </div>
-        <div className="text-white text-sm mt-3">
-          <p className="text-center">
-            <MapPin className="w-4 h-4 text-red-400 inline mr-1" />
-            Currently showing weather for NOPA, San Francisco
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
