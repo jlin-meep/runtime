@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Navigation, Search } from 'lucide-react';
+import { MapPin, Navigation, Search, X } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import mapboxgl from 'mapbox-gl';
@@ -9,11 +8,13 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 interface LocationSelectorProps {
   onLocationChange?: (coordinates: [number, number], address?: string) => void;
   initialLocation?: [number, number];
+  onClose?: () => void;
 }
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({ 
   onLocationChange, 
-  initialLocation = [-122.4364, 37.7751] 
+  initialLocation = [-122.4364, 37.7751],
+  onClose
 }) => {
   const [addressInput, setAddressInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -186,8 +187,18 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-      <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 relative">
+      {/* Close button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-lg transition-colors z-10"
+        >
+          <X className="w-4 h-4 text-white" />
+        </button>
+      )}
+      
+      <h3 className="text-lg font-semibold text-white mb-3 flex items-center pr-8">
         <MapPin className="w-5 h-5 mr-2 text-yellow-300" />
         Set Your Running Location
       </h3>

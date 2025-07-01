@@ -68,7 +68,13 @@ const BestTimeHeader: React.FC<BestTimeHeaderProps> = ({
       </div>
       
       <CollapsibleContent className="mt-4">
-        {children}
+        {/* Pass onClose to LocationSelector */}
+        {React.isValidElement(children) 
+          ? React.cloneElement(children as React.ReactElement, { 
+              onClose: () => onToggleLocationSection() 
+            })
+          : children
+        }
       </CollapsibleContent>
     </Collapsible>
   );
