@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Clock, Sun, Timer } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -112,20 +113,69 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       current.score > best.score ? current : best
     );
 
-    const getReason = (slot: TimeSlot, conditions: WeatherData): string => {
+    const getDetailedReason = (slot: TimeSlot, conditions: WeatherData): string => {
       const temp = Math.round(conditions.temperature);
+      const futureSlots = halfHourlyData.filter(s => s.hour > slot.hour);
       
-      if (slot.hour < 10) {
-        return `Cool early morning at ${temp}°F with low UV and gentle breeze`;
-      } else if (slot.hour < 12) {
-        return `Pleasant morning conditions at ${temp}°F with comfortable temperatures`;
-      } else if (slot.hour < 15) {
-        return `Midday conditions at ${temp}°F with moderate temperatures`;
-      } else if (slot.hour < 18) {
-        return `Warm afternoon at ${temp}°F with good running conditions`;
+      // Analyze future conditions
+      const futureTemps = futureSlots.map(s => s.temperature);
+      const futureWinds = futureSlots.map(s => s.windSpeed);
+      const futureUVs = futureSlots.map(s => s.uvIndex);
+      const futureClouds = futureSlots.map(s => s.cloudCoverage);
+      
+      let reason = `${temp}°F with `;
+      
+      // Wind analysis
+      if (futureWinds.length > 0) {
+        const avgFutureWind = futureWinds.reduce((a, b) => a + b, 0) / futureWinds.length;
+        if (avgFutureWind > conditions.windSpeed + 3) {
+          reason += `calm winds before they pick up later (winds rising to ${Math.round(avgFutureWind)} mph)`;
+        } else if (avgFutureWind < conditions.windSpeed - 3) {
+          reason += `moderate winds that will calm down later`;
+        } else {
+          reason += `steady wind conditions`;
+        }
       } else {
-        return `Perfect evening conditions at ${temp}°F with cooling temperatures`;
+        reason += `${Math.round(conditions.windSpeed)} mph winds`;
       }
+      
+      // UV analysis
+      if (futureUVs.length > 0) {
+        const maxFutureUV = Math.max(...futureUVs);
+        const avgFutureUV = futureUVs.reduce((a, b) => a + b, 0) / futureUVs.length;
+        
+        if (conditions.uvIndex <= 3 && maxFutureUV > 6) {
+          reason += ` and low UV before it intensifies later (peaks at UV ${Math.round(maxFutureUV)})`;
+        } else if (conditions.uvIndex > 6 && avgFutureUV < 4) {
+          reason += ` - UV will drop significantly later for evening runs`;
+        } else if (conditions.uvIndex > 7) {
+          reason += ` but high UV exposure (UV ${conditions.uvIndex})`;
+        }
+      }
+      
+      // Temperature trends
+      if (futureTemps.length > 0) {
+        const avgFutureTemp = futureTemps.reduce((a, b) => a + b, 0) / futureTemps.length;
+        const tempDiff = avgFutureTemp - temp;
+        
+        if (tempDiff > 5) {
+          reason += ` before temperatures rise to ${Math.round(avgFutureTemp)}°F`;
+        } else if (tempDiff < -5) {
+          reason += ` before cooling to ${Math.round(avgFutureTemp)}°F`;
+        }
+      }
+      
+      // Cloud/rain analysis
+      if (futureClouds.length > 0) {
+        const avgFutureClouds = futureClouds.reduce((a, b) => a + b, 0) / futureClouds.length;
+        if (avgFutureClouds > conditions.cloudCoverage + 20) {
+          reason += ` with increasing clouds later`;
+        } else if (conditions.cloudCoverage > 70 && avgFutureClouds < 40) {
+          reason += ` with clearing skies ahead`;
+        }
+      }
+      
+      return reason;
     };
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
@@ -147,7 +197,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       time: displayTime,
       originalTime: bestTime.time,
       isNow,
-      reason: getReason(bestTime, conditions),
+      reason: getDetailedReason(bestTime, conditions),
       conditions
     };
   }, [halfHourlyData, timeWindow, runDuration, currentWeather]);
