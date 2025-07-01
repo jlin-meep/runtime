@@ -70,7 +70,7 @@ export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: num
     // Normalize values to 0-1 range and invert so lower values get higher scores
     const windScore = Math.max(0, (20 - slot.windSpeed) / 20) * 40; // 40% weight - most important
     const uvScore = Math.max(0, (10 - slot.uvIndex) / 10) * 30; // 30% weight
-    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 65)) / 100) * 20; // 20% weight (ideal temp ~65°F)
+    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 70)) / 100) * 20; // 20% weight (ideal temp ~70°F)
     const cloudScore = Math.max(0, (100 - slot.cloudCoverage) / 100) * 10; // 10% weight - least important
     
     return windScore + uvScore + tempScore + cloudScore;
