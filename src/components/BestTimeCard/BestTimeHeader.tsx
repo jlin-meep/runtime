@@ -26,15 +26,15 @@ const BestTimeHeader: React.FC<BestTimeHeaderProps> = ({
         </div>
         <div className="flex-1">
           <h2 className="text-xl md:text-2xl font-bold text-white">Best Time to Start Running</h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <p className="text-white/80 text-sm md:text-base">{locationName}</p>
             <CollapsibleTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-white/70 hover:text-white hover:bg-white/10 h-auto p-1 text-xs"
+                className="text-white/70 hover:text-white hover:bg-white/10 h-auto p-1 text-xs gap-2"
               >
-                <MapPin className="w-3 h-3 mr-1" />
+                <MapPin className="w-3 h-3" />
                 Change Location
               </Button>
             </CollapsibleTrigger>
