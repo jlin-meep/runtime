@@ -2,6 +2,7 @@
 import React from 'react';
 import { Sun, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
 import { WeatherData } from '../../utils/weatherTypes';
 import { useIsMobile } from '../../hooks/use-mobile';
 
@@ -22,6 +23,34 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   runDuration
 }) => {
   const isMobile = useIsMobile();
+
+  const tooltipContent = (
+    <div className="space-y-3 max-w-[280px]">
+      <p className="text-sm font-medium">
+        Wind conditions have the highest impact on your running score, followed by temperature comfort.
+      </p>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>Wind (40%)</div>
+        <div>Temperature (30%)</div>
+        <div>UV (20%)</div>
+        <div>Clouds (10%)</div>
+      </div>
+    </div>
+  );
+
+  const popoverContent = (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-800 font-medium">
+        Wind conditions have the highest impact on your running score, followed by temperature comfort.
+      </p>
+      <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+        <div>Wind (40%)</div>
+        <div>Temperature (30%)</div>
+        <div>UV (20%)</div>
+        <div>Clouds (10%)</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="text-center py-4 md:py-6">
@@ -52,37 +81,41 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
         <div className="flex items-center space-x-1">
           <span className="text-white/80">UV {bestTime.conditions.uvIndex}</span>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="text-white">
-              <Info className="w-4 h-4" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
-            align={isMobile ? "start" : "end"}
-            side="top"
-            sideOffset={8}
-            style={isMobile ? {
-              position: 'fixed',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              right: 'auto'
-            } : undefined}
-          >
-            <div className="space-y-3">
-              <p className="text-sm text-gray-800 font-medium">
-                Wind conditions have the highest impact on your running score, followed by temperature comfort.
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                <div>Wind (40%)</div>
-                <div>Temperature (30%)</div>
-                <div>UV (20%)</div>
-                <div>Clouds (10%)</div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+        
+        {isMobile ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-white">
+                  <Info className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent 
+                className="bg-white/95 backdrop-blur-sm border border-white/30 text-gray-800"
+                side="top"
+                sideOffset={8}
+              >
+                {tooltipContent}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-white">
+                <Info className="w-4 h-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
+              align="end"
+              side="top"
+              sideOffset={8}
+            >
+              {popoverContent}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
     </div>
   );
