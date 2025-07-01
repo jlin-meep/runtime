@@ -11,7 +11,6 @@ interface BestTimeRecommendationProps {
     reason: string;
     conditions: WeatherData;
     contextualInsight?: string;
-    worstTimeWarning?: string;
   };
   runDuration: number;
 }
@@ -33,11 +32,6 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
       <p className="text-white/90 text-base md:text-lg mb-2 px-2">
         {bestTime.contextualInsight || bestTime.reason}
       </p>
-      {bestTime.worstTimeWarning && (
-        <p className="text-orange-200 text-sm mb-2 px-2 font-medium">
-          ⚠️ {bestTime.worstTimeWarning}
-        </p>
-      )}
       <p className="text-white/70 text-sm mb-4 px-2">
         {bestTime.isNow ? 
           `Perfect time to start your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run right now!` :
