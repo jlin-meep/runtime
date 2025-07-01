@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Clock, Sun, Timer } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -19,16 +20,22 @@ interface BestTimeCardProps {
 }
 
 const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 'Your Location' }) => {
-  const [timeWindow, setTimeWindow] = useState([6, 20]); // Default: 6 AM to 8 PM
+  const [timeWindow, setTimeWindow] = useState([9, 20]); // Changed default: 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
 
   const bestTimeInWindow = useMemo(() => {
+    // Get current hour
+    const currentHour = new Date().getHours();
+    
+    // Adjust start time to be at least the current hour if we're looking at today
+    const adjustedStartHour = Math.max(timeWindow[0], currentHour);
+    
     // Adjust end time based on run duration to ensure we can complete the run
     const adjustedEndHour = timeWindow[1] - runDuration;
     
-    // Filter data to only include times within the adjusted window
+    // Filter data to only include times within the adjusted window and after current time
     const filteredData = hourlyData.filter(slot => 
-      slot.hour >= timeWindow[0] && slot.hour <= adjustedEndHour
+      slot.hour >= adjustedStartHour && slot.hour <= adjustedEndHour
     );
 
     if (filteredData.length === 0) {
@@ -71,7 +78,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
     return (
       <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
         <div className="text-center text-white">
-          <p>No data available for selected time window and run duration</p>
+          <p>No suitable times available in your selected window for today</p>
         </div>
       </div>
     );
