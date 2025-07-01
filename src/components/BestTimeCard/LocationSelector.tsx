@@ -187,7 +187,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 relative">
+    <div className="bg-white/10 rounded-2xl p-4 border border-white/20 relative">
       {/* Close button */}
       {onClose && (
         <button
