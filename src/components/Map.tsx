@@ -220,7 +220,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
       <div className="text-white/80 text-sm space-y-1">
         <p className="text-center flex items-center justify-center gap-1">
           <MapPin className="w-4 h-4 text-red-400" />
-          Click anywhere on the map or drag the pin to set your location
+          Enter an address/zip code above or drag the pin to set your location
         </p>
         <p className="text-center text-white/60 text-xs">
           Weather data will be sourced from the nearest available station
