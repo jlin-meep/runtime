@@ -33,11 +33,12 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
   };
 
   const formatTimeWithMinutes = (hour: number, minute: number) => {
-    const timeStr = formatTime(hour);
     if (minute === 0) {
-      return timeStr;
+      return formatTime(hour);
     } else {
-      return timeStr.replace(/M$/, `:${minute.toString().padStart(2, '0')}M`);
+      const period = hour < 12 ? 'AM' : 'PM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
     }
   };
 
@@ -101,15 +102,24 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
     );
 
     const getReason = (slot: TimeSlot): string => {
-      if (slot.hour < 12) {
-        return "Cool morning temps with low UV and gentle breeze";
+      if (slot.hour < 10) {
+        return "Cool early morning temps with low UV and gentle breeze";
+      } else if (slot.hour < 12) {
+        return "Pleasant morning conditions with comfortable temperatures";
+      } else if (slot.hour < 15) {
+        return "Midday conditions with moderate temperatures";
+      } else if (slot.hour < 18) {
+        return "Afternoon conditions with warm temperatures";
       } else {
         return "Perfect evening conditions with cooling temperatures";
       }
     };
 
-    // Check if the suggested time is "now" (within the current hour)
-    const isNow = bestTime.hour === currentHour;
+    // Check if the suggested time is "now" (within 30 minutes of current time)
+    const bestTimeTotalMinutes = bestTime.hour * 60 + bestTime.minute;
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+    const isNow = Math.abs(bestTimeTotalMinutes - currentTotalMinutes) <= 30;
+    
     const displayTime = isNow ? "Now" : bestTime.time;
 
     return {
