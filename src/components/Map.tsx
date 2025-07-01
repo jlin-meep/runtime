@@ -91,7 +91,7 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
       });
 
       // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationZoomControl(), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       // Map load event
       map.current.on('load', () => {
