@@ -2,7 +2,6 @@
 import React from 'react';
 import { Sun } from 'lucide-react';
 import { WeatherData } from '../../utils/weatherTypes';
-import ScoreBreakdown from './ScoreBreakdown';
 
 interface BestTimeRecommendationProps {
   bestTime: {
@@ -11,23 +10,13 @@ interface BestTimeRecommendationProps {
     isNow: boolean;
     reason: string;
     conditions: WeatherData;
-    scoreBreakdown?: {
-      windScore: number;
-      uvScore: number;
-      tempScore: number;
-      cloudScore: number;
-      currentTimeBonus: number;
-      total: number;
-    };
   };
   runDuration: number;
-  showScoreDetails: boolean;
 }
 
 const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   bestTime,
-  runDuration,
-  showScoreDetails
+  runDuration
 }) => {
   return (
     <div className="text-center py-4 md:py-6">
@@ -62,11 +51,6 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <span className="text-white/80">UV {bestTime.conditions.uvIndex}</span>
         </div>
       </div>
-
-      {/* Score Breakdown */}
-      {showScoreDetails && bestTime.scoreBreakdown && (
-        <ScoreBreakdown scoreBreakdown={bestTime.scoreBreakdown} />
-      )}
     </div>
   );
 };

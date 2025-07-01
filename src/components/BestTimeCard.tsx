@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { Clock, Info } from 'lucide-react';
 import { TimeSlot, WeatherData } from '../utils/weatherTypes';
 import { formatTimeWithMinutes } from '../utils/timeUtils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import TimeWindowControls from './BestTimeCard/TimeWindowControls';
 import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
 
@@ -19,7 +19,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 }) => {
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
-  const [showScoreDetails, setShowScoreDetails] = useState(false);
 
   // Generate half-hour time slots from hourly data
   const halfHourlyData = useMemo(() => {
@@ -174,13 +173,28 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
             <h2 className="text-xl md:text-2xl font-bold text-white">Best Time to Start Running</h2>
             <p className="text-white/80 text-sm md:text-base">{locationName}</p>
           </div>
-          <button
-            onClick={() => setShowScoreDetails(!showScoreDetails)}
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-            title="Show scoring details"
-          >
-            <Info className="w-4 h-4 text-white" />
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                  <Info className="w-4 h-4 text-white" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs p-4 bg-white/95 backdrop-blur-sm border border-white/30">
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-800 font-medium">
+                    Wind conditions have the highest impact on your running score, followed by temperature comfort.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                    <div>Wind (40%)</div>
+                    <div>Temperature (30%)</div>
+                    <div>UV (20%)</div>
+                    <div>Clouds (10%)</div>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Controls */}
@@ -196,7 +210,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
         <BestTimeRecommendation
           bestTime={bestTimeInWindow}
           runDuration={runDuration}
-          showScoreDetails={showScoreDetails}
         />
       ) : (
         <div className="text-center py-4 md:py-6">
