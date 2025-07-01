@@ -153,7 +153,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
         <h3 className="text-xl font-semibold text-white mb-4">Set Your Running Location</h3>
         <div className="bg-white/10 rounded-lg p-4">
-          <p className="text-white/90 text-sm mb-3">
+          <p className="text-white text-sm mb-3">
             To display the interactive map, please enter your Mapbox public token:
           </p>
           <input
@@ -170,7 +170,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
               }
             }}
           />
-          <p className="text-white/70 text-xs mt-2">
+          <p className="text-white text-xs mt-2">
             Get your free token at <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a> • Press Enter to save
           </p>
         </div>
@@ -191,7 +191,7 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
             value={addressInput}
             onChange={(e) => setAddressInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
-            className="flex-1 bg-white/20 border-white/30 text-white placeholder-white/60"
+            className="flex-1 bg-white/20 border-white/30 text-white placeholder-white"
           />
           <Button 
             onClick={searchAddress} 
@@ -216,12 +216,12 @@ const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocatio
       <div ref={mapContainer} className="w-full h-64 rounded-lg shadow-lg mb-3" />
       
       {/* Instructions */}
-      <div className="text-white/80 text-sm space-y-1">
+      <div className="text-white text-sm space-y-1">
         <p className="text-center flex items-center justify-center gap-1">
           <MapPin className="w-4 h-4 text-red-400" />
           Click anywhere on the map or drag the pin to set your location
         </p>
-        <p className="text-center text-white/60 text-xs">
+        <p className="text-center text-white text-xs">
           Weather data will be sourced from the nearest available station
         </p>
       </div>
