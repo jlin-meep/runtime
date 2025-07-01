@@ -1,4 +1,3 @@
-
 interface WeatherData {
   temperature: number;
   windSpeed: number;
@@ -54,6 +53,35 @@ export const getHourlyWeatherData = (): TimeSlot[] => {
     { time: "8:00 PM", hour: 20, score: 85, temperature: 64, windSpeed: 5, cloudCoverage: 10, uvIndex: 1 },
     { time: "9:00 PM", hour: 21, score: 80, temperature: 62, windSpeed: 4, cloudCoverage: 5, uvIndex: 0 }
   ];
+};
+
+export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: number, endHour: number): TimeSlot | null => {
+  // Filter data to only include times within the selected window
+  const filteredData = hourlyData.filter(slot => 
+    slot.hour >= startHour && slot.hour <= endHour
+  );
+
+  if (filteredData.length === 0) {
+    return null;
+  }
+
+  // Calculate weighted score prioritizing: 1) lowest wind, 2) lowest UV, 3) temperature, 4) cloud coverage
+  const calculatePriorityScore = (slot: TimeSlot): number => {
+    // Normalize values to 0-1 range and invert so lower values get higher scores
+    const windScore = Math.max(0, (20 - slot.windSpeed) / 20) * 40; // 40% weight - most important
+    const uvScore = Math.max(0, (10 - slot.uvIndex) / 10) * 30; // 30% weight
+    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 65)) / 100) * 20; // 20% weight (ideal temp ~65°F)
+    const cloudScore = Math.max(0, (100 - slot.cloudCoverage) / 100) * 10; // 10% weight - least important
+    
+    return windScore + uvScore + tempScore + cloudScore;
+  };
+
+  // Find the time slot with the highest priority score
+  return filteredData.reduce((best, current) => {
+    const currentScore = calculatePriorityScore(current);
+    const bestScore = calculatePriorityScore(best);
+    return currentScore > bestScore ? current : best;
+  });
 };
 
 export const getBestRunningTime = (): { time: string; reason: string; conditions: WeatherData } => {
