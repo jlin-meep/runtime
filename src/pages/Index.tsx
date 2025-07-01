@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
@@ -10,6 +11,7 @@ const Index = () => {
   const [hourlyData, setHourlyData] = useState([]);
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number]>([-122.4364, 37.7751]); // Default NOPA
   const [locationName, setLocationName] = useState('NOPA, San Francisco');
   
@@ -49,9 +51,14 @@ const Index = () => {
     return 'Unknown Location';
   };
 
-  const loadWeatherData = async () => {
+  const loadWeatherData = async (isLocationChange = false) => {
     try {
       console.log('Loading weather data for location:', locationName, userLocation);
+      
+      // Only show weather loading for location changes after initial load
+      if (isLocationChange && !loading) {
+        setWeatherLoading(true);
+      }
       
       // Update weather service location
       updateWeatherLocation(userLocation);
@@ -71,16 +78,24 @@ const Index = () => {
       console.error('Error loading weather data:', error);
     } finally {
       setLoading(false);
+      setWeatherLoading(false);
     }
   };
 
+  // Initial load
   useEffect(() => {
     loadWeatherData();
-  }, [userLocation]); // Reload weather data when location changes
+  }, []);
+
+  // Reload weather data when location changes (but don't reset loading state)
+  useEffect(() => {
+    if (!loading) { // Only reload if we're not in initial loading state
+      loadWeatherData(true);
+    }
+  }, [userLocation]);
 
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
     console.log('Location change requested:', coordinates, address);
-    setLoading(true);
     setUserLocation(coordinates);
     
     // Update location name
@@ -116,6 +131,7 @@ const Index = () => {
           </h1>
           <p className="text-white/80 text-lg">
             Weather data for {locationName}
+            {weatherLoading && <span className="ml-2 text-yellow-300">• Updating...</span>}
           </p>
         </div>
 
@@ -125,6 +141,7 @@ const Index = () => {
             <Map 
               mapboxToken={mapboxToken} 
               onLocationChange={handleLocationChange}
+              initialLocation={userLocation}
             />
           </div>
 

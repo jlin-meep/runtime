@@ -9,15 +9,27 @@ import { Button } from './ui/button';
 interface MapProps {
   mapboxToken?: string;
   onLocationChange?: (coordinates: [number, number], address?: string) => void;
+  initialLocation?: [number, number];
 }
 
-const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange }) => {
+const Map: React.FC<MapProps> = ({ mapboxToken, onLocationChange, initialLocation = [-122.4364, 37.7751] }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<[number, number]>([-122.4364, 37.7751]); // Default to NOPA
+  const [currentLocation, setCurrentLocation] = useState<[number, number]>(initialLocation);
   const [addressInput, setAddressInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Update current location when initialLocation prop changes
+  useEffect(() => {
+    if (initialLocation && (initialLocation[0] !== currentLocation[0] || initialLocation[1] !== currentLocation[1])) {
+      setCurrentLocation(initialLocation);
+      if (map.current && marker.current) {
+        marker.current.setLngLat(initialLocation);
+        map.current.setCenter(initialLocation);
+      }
+    }
+  }, [initialLocation]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
