@@ -5,20 +5,26 @@ import { useBestTimeLogic } from '../hooks/useBestTimeLogic';
 import BestTimeHeader from './BestTimeCard/BestTimeHeader';
 import TimeWindowControls from './BestTimeCard/TimeWindowControls';
 import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
+import LocationSelector from './BestTimeCard/LocationSelector';
 
 interface BestTimeCardProps {
   hourlyData: TimeSlot[];
   locationName?: string;
   currentWeather?: WeatherData;
+  onLocationChange?: (coordinates: [number, number], address?: string) => void;
+  initialLocation?: [number, number];
 }
 
 const BestTimeCard: React.FC<BestTimeCardProps> = ({ 
   hourlyData, 
   locationName = 'Your Location',
-  currentWeather 
+  currentWeather,
+  onLocationChange,
+  initialLocation
 }) => {
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
+  const [isLocationSectionOpen, setIsLocationSectionOpen] = useState(false);
 
   const bestTimeInWindow = useBestTimeLogic({
     hourlyData,
@@ -29,10 +35,18 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/30 shadow-2xl">
-      {/* Header Section */}
+      {/* Header Section with Collapsible Location Selector */}
       <div className="flex flex-col space-y-4 mb-6">
-        {/* Title and Location */}
-        <BestTimeHeader locationName={locationName} />
+        <BestTimeHeader 
+          locationName={locationName}
+          isLocationSectionOpen={isLocationSectionOpen}
+          onToggleLocationSection={() => setIsLocationSectionOpen(!isLocationSectionOpen)}
+        >
+          <LocationSelector 
+            onLocationChange={onLocationChange}
+            initialLocation={initialLocation}
+          />
+        </BestTimeHeader>
 
         {/* Controls */}
         <TimeWindowControls

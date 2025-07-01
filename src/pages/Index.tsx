@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
-import Map from '../components/Map';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
 
 const Index = () => {
@@ -12,8 +11,20 @@ const Index = () => {
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(false);
-  const [userLocation, setUserLocation] = useState<[number, number]>([-122.4364, 37.7751]); // Default NOPA
-  const [locationName, setLocationName] = useState('NOPA, San Francisco');
+  
+  // Load initial location from localStorage or default to NOPA
+  const getInitialLocation = (): [number, number] => {
+    const saved = localStorage.getItem('runningAppLocation');
+    return saved ? JSON.parse(saved) : [-122.4364, 37.7751];
+  };
+  
+  const getInitialLocationName = (): string => {
+    const savedName = localStorage.getItem('runningAppLocationName');
+    return savedName || 'NOPA, San Francisco';
+  };
+
+  const [userLocation, setUserLocation] = useState<[number, number]>(getInitialLocation());
+  const [locationName, setLocationName] = useState(getInitialLocationName());
 
   // Use your valid Mapbox token for reverse geocoding
   const mapboxToken = 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
@@ -105,17 +116,23 @@ const Index = () => {
 
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
     console.log('🎯 Location change requested:', coordinates, address);
+    
+    // Save location to localStorage
+    localStorage.setItem('runningAppLocation', JSON.stringify(coordinates));
+    
     setUserLocation(coordinates);
 
     // Update location name
     if (address) {
       console.log('📍 Using provided address:', address);
       setLocationName(address);
+      localStorage.setItem('runningAppLocationName', address);
     } else {
       // Use reverse geocoding to get location name
       console.log('🔍 Reverse geocoding new location...');
       const geocodedName = await reverseGeocode(coordinates);
       setLocationName(geocodedName);
+      localStorage.setItem('runningAppLocationName', geocodedName);
     }
     console.log('✅ Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
   };
@@ -130,7 +147,7 @@ const Index = () => {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
@@ -144,17 +161,14 @@ const Index = () => {
         </div>
 
         <div className="grid gap-8 max-w-6xl mx-auto">
-          {/* Map Section - moved to top for better UX */}
-          <div className="col-span-full">
-            <Map onLocationChange={handleLocationChange} initialLocation={userLocation} />
-          </div>
-
           {/* Best Time Section */}
           <div className="col-span-full">
             <BestTimeCard 
               hourlyData={hourlyData} 
               locationName={locationName} 
               currentWeather={currentWeather}
+              onLocationChange={handleLocationChange}
+              initialLocation={userLocation}
             />
           </div>
 
