@@ -34,56 +34,81 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
   }, [initialLocation]);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken) {
+      console.error('Missing map container or token');
+      return;
+    }
 
     console.log('🗺️ Initializing interactive map...');
+    console.log('Token available:', !!mapboxToken);
+    console.log('Container available:', !!mapContainer.current);
 
     // Initialize map
     mapboxgl.accessToken = mapboxToken;
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: currentLocation,
-      zoom: 14,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: currentLocation,
+        zoom: 14,
+      });
 
-    // Add initial marker
-    marker.current = new mapboxgl.Marker({ 
-      color: '#ef4444',
-      draggable: true
-    })
-      .setLngLat(currentLocation)
-      .setPopup(
-        new mapboxgl.Popup({ offset: 25 })
-          .setHTML('<div><strong>🏃‍♂️ Your Running Location</strong><br/>Drag to adjust or use the controls below</div>')
-      )
-      .addTo(map.current);
+      console.log('Map instance created successfully');
 
-    // Handle marker drag
-    marker.current.on('dragend', () => {
-      if (marker.current) {
-        const lngLat = marker.current.getLngLat();
-        const newCoords: [number, number] = [lngLat.lng, lngLat.lat];
+      // Add initial marker
+      marker.current = new mapboxgl.Marker({ 
+        color: '#ef4444',
+        draggable: true
+      })
+        .setLngLat(currentLocation)
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 })
+            .setHTML('<div><strong>🏃‍♂️ Your Running Location</strong><br/>Drag to adjust or use the controls below</div>')
+        )
+        .addTo(map.current);
+
+      console.log('Marker added successfully');
+
+      // Handle marker drag
+      marker.current.on('dragend', () => {
+        if (marker.current) {
+          const lngLat = marker.current.getLngLat();
+          const newCoords: [number, number] = [lngLat.lng, lngLat.lat];
+          setCurrentLocation(newCoords);
+          onLocationChange?.(newCoords);
+          console.log('📍 Location updated via drag:', newCoords);
+        }
+      });
+
+      // Handle map clicks
+      map.current.on('click', (e) => {
+        const newCoords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
         setCurrentLocation(newCoords);
+        marker.current?.setLngLat(newCoords);
         onLocationChange?.(newCoords);
-        console.log('📍 Location updated via drag:', newCoords);
-      }
-    });
+        console.log('📍 Location updated via click:', newCoords);
+      });
 
-    // Handle map clicks
-    map.current.on('click', (e) => {
-      const newCoords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-      setCurrentLocation(newCoords);
-      marker.current?.setLngLat(newCoords);
-      onLocationChange?.(newCoords);
-      console.log('📍 Location updated via click:', newCoords);
-    });
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationZoomControl(), 'top-right');
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Map load event
+      map.current.on('load', () => {
+        console.log('✅ Map loaded successfully');
+      });
+
+      // Map error event
+      map.current.on('error', (e) => {
+        console.error('❌ Map error:', e);
+      });
+
+    } catch (error) {
+      console.error('❌ Error initializing map:', error);
+    }
 
     return () => {
+      console.log('🧹 Cleaning up map');
       map.current?.remove();
     };
   }, [mapboxToken]);
