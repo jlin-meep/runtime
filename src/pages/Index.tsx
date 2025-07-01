@@ -15,8 +15,8 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<[number, number]>([-122.4364, 37.7751]); // Default NOPA
   const [locationName, setLocationName] = useState('NOPA, San Francisco');
 
-  // Hardcoded Mapbox token for reverse geocoding
-  const mapboxToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbTR1aXNvcTcwMDFhMmpzZDVma3FsOGQzIn0.BM_zHpJyQJaLnNALAjE5jA';
+  // Use your valid Mapbox token for reverse geocoding
+  const mapboxToken = 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
 
   const reverseGeocode = async (coordinates: [number, number]): Promise<string> => {
     if (!mapboxToken) return 'Unknown Location';
