@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -19,12 +20,12 @@ const Map: React.FC<MapProps> = ({ onLocationChange, initialLocation = [-122.436
   const [loading, setLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // Using a different approach - let's try without hardcoded token first
+  // Using your valid Mapbox token
   const [mapboxToken, setMapboxToken] = useState('');
 
   useEffect(() => {
-    // Try to get token from environment or use fallback
-    const token = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbTR1aXNvcTcwMDFhMmpzZDVma3FsOGQzIn0.BM_zHpJyQJaLnNALAjE5jA';
+    // Use your new valid token or environment variable
+    const token = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
     console.log('🔑 Using Mapbox token:', token.substring(0, 20) + '...');
     setMapboxToken(token);
   }, []);
