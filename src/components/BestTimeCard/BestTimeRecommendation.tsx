@@ -23,6 +23,15 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  // Calculate offset to center popover on mobile
+  const getAlignOffset = () => {
+    if (!isMobile) return 0;
+    // On mobile, we want to center the popover (320px width) on screen
+    // The trigger button is likely positioned near the right side
+    // So we need a negative offset to pull it back to center
+    return -160; // Half of popover width (320px / 2)
+  };
+
   return (
     <div className="text-center py-4 md:py-6">
       <div className="text-4xl md:text-6xl font-bold text-white mb-2">
@@ -60,10 +69,10 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           </PopoverTrigger>
           <PopoverContent 
             className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
-            align={isMobile ? "center" : "end"}
+            align="center"
             side="top"
             sideOffset={8}
-            alignOffset={isMobile ? -120 : 0}
+            alignOffset={getAlignOffset()}
           >
             <div className="space-y-3">
               <p className="text-sm text-gray-800 font-medium">
