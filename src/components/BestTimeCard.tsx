@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { TimeSlot, WeatherData } from '../utils/weatherTypes';
 import { useBestTimeLogic } from '../hooks/useBestTimeLogic';
+import { calculateForecastRange } from '../utils/forecastUtils';
 import BestTimeHeader from './BestTimeCard/BestTimeHeader';
 import TimeWindowControls from './BestTimeCard/TimeWindowControls';
 import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
@@ -33,6 +34,9 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
     currentWeather
   });
 
+  // Calculate forecast range for the time window to pass to WeatherCard
+  const forecastRange = calculateForecastRange(hourlyData, timeWindow);
+
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/30 shadow-2xl">
       {/* Header Section with Collapsible Location Selector */}
@@ -41,6 +45,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           locationName={locationName}
           isLocationSectionOpen={isLocationSectionOpen}
           onToggleLocationSection={() => setIsLocationSectionOpen(!isLocationSectionOpen)}
+          forecastRange={forecastRange}
         >
           <LocationSelector 
             onLocationChange={onLocationChange}
