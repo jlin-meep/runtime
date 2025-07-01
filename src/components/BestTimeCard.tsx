@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { Clock, Info } from 'lucide-react';
 import { TimeSlot, WeatherData } from '../utils/weatherTypes';
 import { formatTimeWithMinutes } from '../utils/timeUtils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import TimeWindowControls from './BestTimeCard/TimeWindowControls';
 import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
 
@@ -173,28 +174,31 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
             <h2 className="text-xl md:text-2xl font-bold text-white">Best Time to Start Running</h2>
             <p className="text-white/80 text-sm md:text-base">{locationName}</p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
-                  <Info className="w-4 h-4 text-white" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs p-4 bg-white/95 backdrop-blur-sm border border-white/30">
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-800 font-medium">
-                    Wind conditions have the highest impact on your running score, followed by temperature comfort.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                    <div>Wind (40%)</div>
-                    <div>Temperature (30%)</div>
-                    <div>UV (20%)</div>
-                    <div>Clouds (10%)</div>
-                  </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                <Info className="w-4 h-4 text-white" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30 mr-4"
+              align="end"
+              side="bottom"
+              sideOffset={8}
+            >
+              <div className="space-y-3">
+                <p className="text-sm text-gray-800 font-medium">
+                  Wind conditions have the highest impact on your running score, followed by temperature comfort.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                  <div>Wind (40%)</div>
+                  <div>Temperature (30%)</div>
+                  <div>UV (20%)</div>
+                  <div>Clouds (10%)</div>
                 </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Controls */}
