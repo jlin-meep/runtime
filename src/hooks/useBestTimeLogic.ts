@@ -122,36 +122,62 @@ export const useBestTimeLogic = ({
       currentWeather: currentWeather ? 'available' : 'not available'
     });
 
-    const getContextualInsight = (slot: TimeSlot, allSlots: TimeSlot[]): string => {
-      const temp = Math.round(slot.temperature);
+    const getContextualInsight = (slot: TimeSlot, currentWeather?: WeatherData): string => {
+      // Check if the suggested time is "now" (within 30 minutes of current time)
+      const bestTimeTotalMinutes = slot.hour * 60 + (slot.minute || 0);
+      const isNow = Math.abs(bestTimeTotalMinutes - currentTotalMinutes) <= 30;
       
-      // Get all available hourly data for the day (not just the window)
-      const allDaySlots = halfHourlyData.filter(s => s.hour >= 6 && s.hour <= 22);
-      const laterSlots = allDaySlots.filter(s => s.hour > slot.hour);
-      
-      let insight = `Optimal conditions at ${temp}°F`;
-      
-      // Analyze overall day trends
-      if (laterSlots.length > 0) {
-        const avgLaterWind = laterSlots.reduce((sum, s) => sum + s.windSpeed, 0) / laterSlots.length;
-        const avgLaterTemp = laterSlots.reduce((sum, s) => sum + s.temperature, 0) / laterSlots.length;
-        const maxLaterUV = Math.max(...laterSlots.map(s => s.uvIndex));
-        
-        // Determine the most significant trend for the day
-        if (avgLaterWind > slot.windSpeed + 3) {
-          insight += ` - winds will increase to ${Math.round(avgLaterWind)} mph later today`;
-        } else if (avgLaterTemp > temp + 6) {
-          insight += ` - temperatures will climb to ${Math.round(avgLaterTemp)}°F this afternoon`;
-        } else if (maxLaterUV > slot.uvIndex + 2) {
-          insight += ` - UV will peak at ${maxLaterUV} during midday hours`;
-        } else if (avgLaterTemp < temp - 5) {
-          insight += ` - temperatures will drop to ${Math.round(avgLaterTemp)}°F later`;
-        } else {
-          insight += ` - conditions will remain relatively stable throughout the day`;
-        }
+      if (isNow) {
+        return "Perfect conditions right now - go for it!";
       }
       
-      return insight;
+      // Compare suggested time vs current conditions
+      if (!currentWeather) {
+        return `Optimal conditions with ${Math.round(slot.windSpeed)} mph winds`;
+      }
+      
+      const tempDiff = slot.temperature - currentWeather.temperature;
+      const windDiff = slot.windSpeed - currentWeather.windSpeed;
+      const uvDiff = slot.uvIndex - currentWeather.uvIndex;
+      const cloudDiff = slot.cloudCoverage - currentWeather.cloudCoverage;
+      
+      // Determine the most significant improvement
+      const improvements: string[] = [];
+      
+      // Wind is the most important factor (40% weight)
+      if (windDiff < -3) {
+        improvements.push(`winds will calm from ${Math.round(currentWeather.windSpeed)} to ${Math.round(slot.windSpeed)} mph`);
+      } else if (windDiff > 3) {
+        improvements.push(`winds will increase to ${Math.round(slot.windSpeed)} mph`);
+      }
+      
+      // Temperature comfort (30% weight)
+      if (tempDiff < -5) {
+        improvements.push(`cooler ${Math.round(slot.temperature)}°F (down from ${Math.round(currentWeather.temperature)}°F)`);
+      } else if (tempDiff > 5) {
+        improvements.push(`warmer ${Math.round(slot.temperature)}°F (up from ${Math.round(currentWeather.temperature)}°F)`);
+      }
+      
+      // UV considerations (20% weight)
+      if (uvDiff < -2) {
+        improvements.push(`lower UV index (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
+      } else if (uvDiff > 2) {
+        improvements.push(`higher UV protection needed (UV ${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
+      }
+      
+      // Cloud coverage (10% weight) - less important but still relevant
+      if (cloudDiff > 20) {
+        improvements.push("more cloud cover for shade");
+      } else if (cloudDiff < -20) {
+        improvements.push("clearer skies");
+      }
+      
+      if (improvements.length === 0) {
+        return `Optimal conditions with ${Math.round(slot.windSpeed)} mph winds`;
+      }
+      
+      // Return the most important improvement
+      return `Better conditions: ${improvements[0]}`;
     };
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
@@ -173,7 +199,7 @@ export const useBestTimeLogic = ({
       originalTime: bestTime.time,
       isNow,
       reason: `${Math.round(conditions.temperature)}°F with ${Math.round(conditions.windSpeed)} mph winds`,
-      contextualInsight: getContextualInsight(bestTime, filteredData),
+      contextualInsight: getContextualInsight(bestTime, currentWeather),
       conditions,
       scoreBreakdown: bestTime.scoreBreakdown,
       allFilteredOptions: filteredData.map(slot => ({
