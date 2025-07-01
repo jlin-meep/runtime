@@ -186,7 +186,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
       <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
         <MapPin className="w-5 h-5 mr-2 text-yellow-300" />
         Set Your Running Location
