@@ -18,6 +18,7 @@ export const useBestTimeLogic = ({
 }: UseBestTimeLogicProps) => {
   // Generate half-hour time slots from hourly data
   const halfHourlyData = useMemo(() => {
+    console.log('🕐 Generating half-hourly data from hourly data:', hourlyData.length, 'slots');
     const slots: TimeSlot[] = [];
     
     hourlyData.forEach(slot => {
@@ -41,32 +42,65 @@ export const useBestTimeLogic = ({
       });
     });
     
-    return slots.sort((a, b) => a.hour === b.hour ? a.minute! - b.minute! : a.hour - b.hour);
+    const sortedSlots = slots.sort((a, b) => a.hour === b.hour ? (a.minute || 0) - (b.minute || 0) : a.hour - b.hour);
+    console.log('✅ Generated', sortedSlots.length, 'half-hourly slots:', sortedSlots.map(s => `${s.time} (score: ${s.score.toFixed(1)})`));
+    return sortedSlots;
   }, [hourlyData]);
 
   const bestTimeInWindow = useMemo(() => {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+    
+    console.log('🔍 Current time:', `${currentHour}:${currentMinute.toString().padStart(2, '0')} (${currentTotalMinutes} minutes)`);
+    console.log('🎯 Time window:', timeWindow, 'Run duration:', runDuration, 'hours');
     
     // Adjust start time to be at least the current time if we're looking at today
     const adjustedStartHour = Math.max(timeWindow[0], currentHour);
+    const adjustedStartMinutes = adjustedStartHour * 60;
     
     // Adjust end time based on run duration to ensure we can complete the run
     const adjustedEndHour = timeWindow[1] - runDuration;
+    const adjustedEndMinutes = adjustedEndHour * 60;
     
+    console.log('⏰ Adjusted window:', {
+      startHour: adjustedStartHour,
+      endHour: adjustedEndHour,
+      startMinutes: adjustedStartMinutes,
+      endMinutes: adjustedEndMinutes,
+      currentMinutes: currentTotalMinutes
+    });
+
     // Filter data to only include times within the adjusted window and after current time
     const filteredData = halfHourlyData.filter(slot => {
       const slotTotalMinutes = slot.hour * 60 + (slot.minute || 0);
-      const currentTotalMinutes = currentHour * 60 + currentMinute;
-      const windowStartMinutes = adjustedStartHour * 60;
-      const windowEndMinutes = adjustedEndHour * 60;
+      const isAfterCurrent = slotTotalMinutes >= currentTotalMinutes;
+      const isInWindow = slotTotalMinutes >= adjustedStartMinutes && slotTotalMinutes <= adjustedEndMinutes;
       
-      return slotTotalMinutes >= Math.max(windowStartMinutes, currentTotalMinutes) && 
-             slotTotalMinutes <= windowEndMinutes;
+      console.log(`📊 Slot ${slot.time} (${slotTotalMinutes}min):`, {
+        afterCurrent: isAfterCurrent,
+        inWindow: isInWindow,
+        passes: isAfterCurrent && isInWindow,
+        score: slot.score.toFixed(1)
+      });
+      
+      return isAfterCurrent && isInWindow;
     });
 
+    console.log('🎛️ Filtered data:', filteredData.length, 'slots remaining');
+    
     if (filteredData.length === 0) {
+      console.log('❌ No filtered data available - checking if any slots exist in time window without current time constraint');
+      
+      // Check what would be available without the current time constraint
+      const windowOnlyFilter = halfHourlyData.filter(slot => {
+        const slotTotalMinutes = slot.hour * 60 + (slot.minute || 0);
+        return slotTotalMinutes >= timeWindow[0] * 60 && slotTotalMinutes <= (timeWindow[1] - runDuration) * 60;
+      });
+      
+      console.log('🔍 Slots in window (ignoring current time):', windowOnlyFilter.length, windowOnlyFilter.map(s => s.time));
+      
       return null;
     }
 
@@ -77,15 +111,15 @@ export const useBestTimeLogic = ({
 
     console.log('🎯 Best time analysis:', {
       time: bestTime.time,
-      score: bestTime.score,
+      score: bestTime.score.toFixed(1),
       conditions: {
-        temp: bestTime.temperature,
-        wind: bestTime.windSpeed,
-        clouds: bestTime.cloudCoverage,
+        temp: Math.round(bestTime.temperature),
+        wind: Math.round(bestTime.windSpeed),
+        clouds: Math.round(bestTime.cloudCoverage),
         uv: bestTime.uvIndex
       },
       scoreBreakdown: bestTime.scoreBreakdown,
-      currentWeather: currentWeather
+      currentWeather: currentWeather ? 'available' : 'not available'
     });
 
     const getContextualInsight = (slot: TimeSlot, allSlots: TimeSlot[]): string => {
@@ -94,7 +128,6 @@ export const useBestTimeLogic = ({
       // Get all available hourly data for the day (not just the window)
       const allDaySlots = halfHourlyData.filter(s => s.hour >= 6 && s.hour <= 22);
       const laterSlots = allDaySlots.filter(s => s.hour > slot.hour);
-      const earlierSlots = allDaySlots.filter(s => s.hour < slot.hour);
       
       let insight = `Optimal conditions at ${temp}°F`;
       
@@ -123,7 +156,6 @@ export const useBestTimeLogic = ({
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
     const bestTimeTotalMinutes = bestTime.hour * 60 + (bestTime.minute || 0);
-    const currentTotalMinutes = currentHour * 60 + currentMinute;
     const isNow = Math.abs(bestTimeTotalMinutes - currentTotalMinutes) <= 30;
     
     const displayTime = isNow ? "Now" : bestTime.time;
