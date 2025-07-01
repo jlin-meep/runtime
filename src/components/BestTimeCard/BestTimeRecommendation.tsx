@@ -26,11 +26,12 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   // Calculate offset to center popover on mobile screen
   const getAlignOffset = () => {
     if (!isMobile) return 0;
-    // On mobile, popover is 320px wide (w-80)
-    // We need to calculate how far to shift it left to center it on screen
-    // Assuming screen is ~375px wide on mobile, center would be at 187.5px
-    // If popover starts from right edge and is 320px, we need to shift left by about 100px
-    return -100;
+    // On mobile, the info button is at the right edge, and we want to center a 320px popover
+    // Typical mobile screen is ~375px wide, so screen center is at 187.5px
+    // When align="center", the popover centers on the button position
+    // The button is likely around 350px from left edge, so we need to shift left by ~162px
+    // to get the popover center (160px from its left edge) to screen center (187.5px)
+    return -162;
   };
 
   return (
