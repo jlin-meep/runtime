@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Cloud, Sun, Wind, Clock } from 'lucide-react';
 
@@ -6,6 +7,7 @@ interface WeatherData {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
+  feelsLike?: number;
 }
 
 interface WeatherCardProps {
@@ -35,7 +37,14 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           </div>
           <div>
             <p className="text-white/80 text-sm">Temperature</p>
-            <p className="text-white font-semibold text-lg">{data.temperature}°F</p>
+            <p className="text-white font-semibold text-lg">
+              {Math.round(data.temperature)}°F
+              {data.feelsLike && Math.round(data.feelsLike) !== Math.round(data.temperature) && (
+                <span className="text-white/70 text-sm block">
+                  Feels like {Math.round(data.feelsLike)}°F
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -45,7 +54,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           </div>
           <div>
             <p className="text-white/80 text-sm">Wind Speed</p>
-            <p className="text-white font-semibold text-lg">{data.windSpeed} mph</p>
+            <p className="text-white font-semibold text-lg">{Math.round(data.windSpeed)} mph</p>
           </div>
         </div>
 
@@ -55,7 +64,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }
           </div>
           <div>
             <p className="text-white/80 text-sm">Cloud Coverage</p>
-            <p className="text-white font-semibold text-lg">{data.cloudCoverage}%</p>
+            <p className="text-white font-semibold text-lg">{Math.round(data.cloudCoverage)}%</p>
           </div>
         </div>
 
