@@ -24,9 +24,9 @@ const BestTimeHeader: React.FC<BestTimeHeaderProps> = ({ locationName }) => {
           </button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30 mr-4"
+          className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
           align="end"
-          side="bottom"
+          side="top"
           sideOffset={8}
         >
           <div className="space-y-3">
