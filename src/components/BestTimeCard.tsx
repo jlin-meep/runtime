@@ -24,6 +24,23 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
 
+  // Helper functions moved above useMemo hooks
+  const formatTime = (hour: number) => {
+    if (hour === 0) return '12 AM';
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return '12 PM';
+    return `${hour - 12} PM`;
+  };
+
+  const formatTimeWithMinutes = (hour: number, minute: number) => {
+    const timeStr = formatTime(hour);
+    if (minute === 0) {
+      return timeStr;
+    } else {
+      return timeStr.replace(/M$/, `:${minute.toString().padStart(2, '0')}M`);
+    }
+  };
+
   // Generate half-hour time slots from hourly data
   const halfHourlyData = useMemo(() => {
     const slots: TimeSlot[] = [];
@@ -108,22 +125,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
       }
     };
   }, [halfHourlyData, timeWindow, runDuration]);
-
-  const formatTime = (hour: number) => {
-    if (hour === 0) return '12 AM';
-    if (hour < 12) return `${hour} AM`;
-    if (hour === 12) return '12 PM';
-    return `${hour - 12} PM`;
-  };
-
-  const formatTimeWithMinutes = (hour: number, minute: number) => {
-    const timeStr = formatTime(hour);
-    if (minute === 0) {
-      return timeStr;
-    } else {
-      return timeStr.replace(/M$/, `:${minute.toString().padStart(2, '0')}M`);
-    }
-  };
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
