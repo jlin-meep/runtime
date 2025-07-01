@@ -203,27 +203,30 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
   }, [halfHourlyData, timeWindow, runDuration, currentWeather]);
 
   return (
-    <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/30 shadow-2xl">
+      {/* Header Section - Mobile First Layout */}
+      <div className="flex flex-col space-y-4 mb-6">
+        {/* Title and Location */}
         <div className="flex items-center space-x-3">
-          <div className="p-3 bg-white/20 rounded-xl">
-            <Clock className="w-8 h-8 text-yellow-300" />
+          <div className="p-2 md:p-3 bg-white/20 rounded-xl">
+            <Clock className="w-6 h-6 md:w-8 md:h-8 text-yellow-300" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Best Time to Start Running</h2>
-            <p className="text-white/80">{locationName}</p>
+            <h2 className="text-xl md:text-2xl font-bold text-white">Best Time to Start Running</h2>
+            <p className="text-white/80 text-sm md:text-base">{locationName}</p>
           </div>
         </div>
 
-        <div className="flex space-x-4">
+        {/* Controls - Stack on mobile, side by side on desktop */}
+        <div className="flex flex-col sm:flex-row gap-4">
           {/* Run Duration Selector */}
-          <div className="p-3 bg-white/10 rounded-xl border border-white/20">
+          <div className="flex-1 p-3 bg-white/10 rounded-xl border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <Timer className="w-4 h-4 text-white" />
               <h3 className="text-white font-semibold text-sm">Run Duration</h3>
             </div>
             <Select value={runDuration.toString()} onValueChange={(value) => setRunDuration(parseFloat(value))}>
-              <SelectTrigger className="w-24 bg-white/10 border-white/20 text-white text-xs">
+              <SelectTrigger className="w-full sm:w-24 bg-white/10 border-white/20 text-white text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -236,7 +239,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           </div>
 
           {/* Time Window Slider */}
-          <div className="w-64 p-3 bg-white/10 rounded-xl border border-white/20">
+          <div className="flex-1 sm:flex-2 p-3 bg-white/10 rounded-xl border border-white/20">
             <h3 className="text-white font-semibold text-sm mb-3">Available Window</h3>
             <div className="relative mb-4">
               <Slider
@@ -274,24 +277,24 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       </div>
       
       {bestTimeInWindow ? (
-        <div className="text-center py-6">
-          <div className="text-6xl font-bold text-white mb-2">
+        <div className="text-center py-4 md:py-6">
+          <div className="text-4xl md:text-6xl font-bold text-white mb-2">
             {bestTimeInWindow.time}
             {bestTimeInWindow.isNow && (
-              <div className="text-lg font-normal text-yellow-300 mt-1">
+              <div className="text-base md:text-lg font-normal text-yellow-300 mt-1">
                 ({bestTimeInWindow.originalTime})
               </div>
             )}
           </div>
-          <p className="text-white/90 text-lg mb-2">{bestTimeInWindow.reason}</p>
-          <p className="text-white/70 text-sm mb-4">
+          <p className="text-white/90 text-base md:text-lg mb-2 px-2">{bestTimeInWindow.reason}</p>
+          <p className="text-white/70 text-sm mb-4 px-2">
             {bestTimeInWindow.isNow ? 
               `Perfect time to start your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run right now!` :
               `Perfect start time for your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run`
             }
           </p>
           
-          <div className="flex justify-center space-x-6 text-sm">
+          <div className="flex flex-wrap justify-center gap-3 md:gap-6 text-sm">
             <div className="flex items-center space-x-1">
               <Sun className="w-4 h-4 text-yellow-300" />
               <span className="text-white/80">{Math.round(bestTimeInWindow.conditions.temperature)}°F</span>
@@ -308,11 +311,11 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           </div>
         </div>
       ) : (
-        <div className="text-center py-6">
-          <div className="text-white/90 text-lg mb-2">
+        <div className="text-center py-4 md:py-6">
+          <div className="text-white/90 text-base md:text-lg mb-2 px-2">
             No suitable times available in your selected window for today
           </div>
-          <p className="text-white/70 text-sm">
+          <p className="text-white/70 text-sm px-2">
             Try adjusting your time window or run duration above
           </p>
         </div>
