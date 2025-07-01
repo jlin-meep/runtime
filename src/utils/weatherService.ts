@@ -1,3 +1,4 @@
+
 import { 
   fetchCurrentWeather, 
   fetchHourlyForecast, 
@@ -73,8 +74,23 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
       
       console.log('📈 Raw forecast data available for', hourly.time.length, 'hours');
       
-      // Get next 16 hours
-      for (let i = 0; i < Math.min(16, hourly.time.length); i++) {
+      // Get current hour to determine how many hours we need
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      // We want to ensure we get data until at least 10 PM (22:00)
+      // So we need hours from current time through end of tomorrow if needed
+      const targetEndHour = 22; // 10 PM
+      const hoursNeeded = targetEndHour >= currentHour ? 
+        (targetEndHour - currentHour + 1) : 
+        (24 - currentHour + targetEndHour + 1);
+      
+      console.log('🕐 Current hour:', currentHour, 'Target end hour:', targetEndHour, 'Hours needed:', hoursNeeded);
+      
+      // Process available hours, but ensure we get at least through 10 PM today
+      const maxHours = Math.min(Math.max(hoursNeeded, 16), hourly.time.length);
+      
+      for (let i = 0; i < maxHours; i++) {
         const time = new Date(hourly.time[i]);
         const hour = time.getHours();
         const temperature = Math.round(hourly.temperature_2m[i]);
@@ -106,13 +122,14 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
       }
       
       console.log('✅ Hourly forecast processed:', timeSlots.length, 'slots for location:', currentLocationDebug);
+      console.log('🕐 Time range covered:', timeSlots[0]?.time, 'to', timeSlots[timeSlots.length - 1]?.time);
       return timeSlots;
     }
   } catch (error) {
     console.error('❌ Error fetching hourly weather data:', error);
   }
   
-  // Fallback to mock data if API fails
+  // Fallback to mock data if API fails - ensure we cover full day
   console.log('⚠️ Using fallback hourly data');
   const fallbackData = [
     { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0 },
@@ -130,7 +147,8 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
     { time: "6:00 PM", hour: 18, score: 82, temperature: 62, windSpeed: 12, cloudCoverage: 35, uvIndex: 2 },
     { time: "7:00 PM", hour: 19, score: 88, temperature: 60, windSpeed: 11, cloudCoverage: 30, uvIndex: 1 },
     { time: "8:00 PM", hour: 20, score: 85, temperature: 58, windSpeed: 10, cloudCoverage: 25, uvIndex: 0 },
-    { time: "9:00 PM", hour: 21, score: 80, temperature: 57, windSpeed: 9, cloudCoverage: 20, uvIndex: 0 }
+    { time: "9:00 PM", hour: 21, score: 80, temperature: 57, windSpeed: 9, cloudCoverage: 20, uvIndex: 0 },
+    { time: "10:00 PM", hour: 22, score: 78, temperature: 56, windSpeed: 8, cloudCoverage: 15, uvIndex: 0 }
   ];
   
   console.log('📋 Fallback data hours:', fallbackData.map(d => `${d.hour}:00 (${d.score})`));
