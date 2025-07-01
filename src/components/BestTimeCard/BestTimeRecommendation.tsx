@@ -24,23 +24,9 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  const tooltipContent = (
-    <div className="space-y-3 max-w-[280px]">
-      <p className="text-sm font-medium">
-        Wind conditions have the highest impact on your running score, followed by temperature comfort.
-      </p>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div>Wind (40%)</div>
-        <div>Temperature (30%)</div>
-        <div>UV (20%)</div>
-        <div>Clouds (10%)</div>
-      </div>
-    </div>
-  );
-
-  const popoverContent = (
+  const contentInfo = (
     <div className="space-y-3">
-      <p className="text-sm text-gray-800 font-medium">
+      <p className="text-sm font-medium text-gray-800">
         Wind conditions have the highest impact on your running score, followed by temperature comfort.
       </p>
       <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
@@ -82,40 +68,33 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <span className="text-white/80">UV {bestTime.conditions.uvIndex}</span>
         </div>
         
-        {isMobile ? (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="text-white">
-                  <Info className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent 
-                className="bg-white/95 backdrop-blur-sm border border-white/30 text-gray-800"
-                side="top"
-                sideOffset={8}
-              >
-                {tooltipContent}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="text-white">
-                <Info className="w-4 h-4" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
-              align="end"
-              side="top"
-              sideOffset={8}
-            >
-              {popoverContent}
-            </PopoverContent>
-          </Popover>
-        )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="text-white">
+              <Info className="w-4 h-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent 
+            className={`bg-white/95 backdrop-blur-sm border border-white/30 p-4 ${
+              isMobile 
+                ? 'w-[90vw] max-w-[320px] fixed left-1/2 transform -translate-x-1/2' 
+                : 'w-80'
+            }`}
+            align={isMobile ? "center" : "end"}
+            side="top"
+            sideOffset={8}
+            avoidCollisions={!isMobile}
+            style={isMobile ? {
+              position: 'fixed',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              top: 'auto',
+              bottom: '100px'
+            } : undefined}
+          >
+            {contentInfo}
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
