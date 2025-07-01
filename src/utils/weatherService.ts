@@ -34,50 +34,6 @@ export interface WeatherStation {
   isActive: boolean;
 }
 
-// Enhanced UV Index calculation with EPA-style logic
-const calculateUVIndex = async (lat: number, lng: number): Promise<number> => {
-  try {
-    // Try EPA API first (if available)
-    const response = await fetch(`https://iaspub.epa.gov/enviro/efservice/getEnvirofactsUVHOURLY/ZIP/94117/JSON`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.length > 0) {
-        return Math.round(data[0].UV_VALUE || 0);
-      }
-    }
-  } catch (error) {
-    console.log('EPA UV API not available, using calculated estimate');
-  }
-  
-  // Fallback to sophisticated calculation
-  const now = new Date();
-  const hour = now.getHours();
-  const month = now.getMonth() + 1;
-  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-  
-  // No UV at night
-  if (hour < 6 || hour > 19) return 0;
-  
-  // Calculate solar elevation angle (simplified)
-  const solarNoon = 13; // Approximate solar noon
-  const hourAngle = Math.abs(hour - solarNoon);
-  
-  // Base UV calculation with seasonal variation
-  let baseUV = Math.max(0, 10 - hourAngle * 1.2);
-  
-  // Seasonal adjustment
-  const summerSolstice = 172; // June 21st
-  const seasonalFactor = 0.5 + 0.5 * Math.cos(2 * Math.PI * (dayOfYear - summerSolstice) / 365);
-  baseUV *= (0.7 + 0.6 * seasonalFactor);
-  
-  // Latitude adjustment (higher latitudes = lower UV)
-  const latitudeFactor = Math.cos(lat * Math.PI / 180);
-  baseUV *= (0.5 + 0.5 * latitudeFactor);
-  
-  return Math.round(Math.min(11, Math.max(0, baseUV)));
-};
-
 // Fallback data in case API fails
 const fallbackWeatherData: WeatherData = {
   temperature: 60,
@@ -113,9 +69,24 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         // Get cloud coverage
         const cloudCoverage = getCloudCoverageFromLayers(props.cloudLayers || []);
         
-        // Get UV index using enhanced calculation
-        const coordinates = station.geometry.coordinates;
-        const uvIndex = await calculateUVIndex(coordinates[1], coordinates[0]);
+        // Get current UV from hourly forecast (NWS doesn't provide current UV in observations)
+        let uvIndex = 0;
+        try {
+          const forecast = await fetchHourlyForecast();
+          if (forecast?.properties?.periods && forecast.properties.periods.length > 0) {
+            // Get current hour's forecast for UV
+            const currentPeriod = forecast.properties.periods[0];
+            // Extract UV from detailed forecast if available
+            const detailedForecast = currentPeriod.detailedForecast?.toLowerCase() || '';
+            const uvMatch = detailedForecast.match(/uv index (\d+)/);
+            if (uvMatch) {
+              uvIndex = parseInt(uvMatch[1]);
+            }
+          }
+        } catch (error) {
+          console.log('Could not get UV from forecast, using fallback');
+          uvIndex = fallbackWeatherData.uvIndex;
+        }
         
         console.log(`Weather data from station ${station.properties.name}:`, {
           temperature, windSpeed, cloudCoverage, uvIndex
@@ -170,11 +141,16 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         else if (shortForecast.includes('mostly cloudy')) cloudCoverage = 70;
         else if (shortForecast.includes('overcast') || shortForecast.includes('cloudy')) cloudCoverage = 90;
         
-        // Estimate UV index based on hour and cloud coverage
+        // Extract UV index from detailed forecast
         let uvIndex = 0;
-        if (hour >= 7 && hour <= 19) {
-          const baseuv = Math.max(0, 6 - Math.abs(hour - 13) * 0.5);
-          uvIndex = Math.max(0, Math.round(baseuv * (1 - cloudCoverage / 200)));
+        const detailedForecast = period.detailedForecast?.toLowerCase() || '';
+        const uvMatch = detailedForecast.match(/uv index (\d+)/);
+        if (uvMatch) {
+          uvIndex = parseInt(uvMatch[1]);
+        } else if (hour >= 7 && hour <= 19) {
+          // Fallback UV calculation only if not found in forecast
+          const baseUv = Math.max(0, 6 - Math.abs(hour - 13) * 0.5);
+          uvIndex = Math.max(0, Math.round(baseUv * (1 - cloudCoverage / 200)));
         }
         
         // Calculate score prioritizing low wind, low UV, comfortable temp
