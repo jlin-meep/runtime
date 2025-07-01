@@ -1,21 +1,59 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Clock, Sun } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
-interface BestTimeCardProps {
-  bestTime: string;
-  reason: string;
-  conditions: {
-    temperature: number;
-    windSpeed: number;
-    cloudCoverage: number;
-    uvIndex: number;
-  };
+interface TimeSlot {
+  time: string;
+  hour: number;
+  score: number;
+  temperature: number;
+  windSpeed: number;
+  cloudCoverage: number;
+  uvIndex: number;
 }
 
-const BestTimeCard: React.FC<BestTimeCardProps> = ({ bestTime, reason, conditions }) => {
+interface BestTimeCardProps {
+  hourlyData: TimeSlot[];
+}
+
+const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData }) => {
   const [timeWindow, setTimeWindow] = useState([6, 20]); // Default: 6 AM to 8 PM
+
+  const bestTimeInWindow = useMemo(() => {
+    // Filter data to only include times within the selected window
+    const filteredData = hourlyData.filter(slot => 
+      slot.hour >= timeWindow[0] && slot.hour <= timeWindow[1]
+    );
+
+    if (filteredData.length === 0) {
+      return null;
+    }
+
+    // Find the best time based on score
+    const bestTime = filteredData.reduce((best, current) => 
+      current.score > best.score ? current : best
+    );
+
+    const getReason = (slot: TimeSlot): string => {
+      if (slot.hour < 12) {
+        return "Cool morning temps with low UV and gentle breeze";
+      } else {
+        return "Perfect evening conditions with cooling temperatures";
+      }
+    };
+
+    return {
+      time: bestTime.time,
+      reason: getReason(bestTime),
+      conditions: {
+        temperature: bestTime.temperature,
+        windSpeed: bestTime.windSpeed,
+        cloudCoverage: bestTime.cloudCoverage,
+        uvIndex: bestTime.uvIndex
+      }
+    };
+  }, [hourlyData, timeWindow]);
 
   const formatTime = (hour: number) => {
     if (hour === 0) return '12 AM';
@@ -23,6 +61,16 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ bestTime, reason, condition
     if (hour === 12) return '12 PM';
     return `${hour - 12} PM`;
   };
+
+  if (!bestTimeInWindow) {
+    return (
+      <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
+        <div className="text-center text-white">
+          <p>No data available for selected time window</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
@@ -75,22 +123,22 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ bestTime, reason, condition
       </div>
       
       <div className="text-center py-6">
-        <div className="text-6xl font-bold text-white mb-2">{bestTime}</div>
-        <p className="text-white/90 text-lg mb-4">{reason}</p>
+        <div className="text-6xl font-bold text-white mb-2">{bestTimeInWindow.time}</div>
+        <p className="text-white/90 text-lg mb-4">{bestTimeInWindow.reason}</p>
         
         <div className="flex justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-1">
             <Sun className="w-4 h-4 text-yellow-300" />
-            <span className="text-white/80">{conditions.temperature}°F</span>
+            <span className="text-white/80">{bestTimeInWindow.conditions.temperature}°F</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="text-white/80">💨 {conditions.windSpeed} mph</span>
+            <span className="text-white/80">💨 {bestTimeInWindow.conditions.windSpeed} mph</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="text-white/80">☁️ {conditions.cloudCoverage}%</span>
+            <span className="text-white/80">☁️ {bestTimeInWindow.conditions.cloudCoverage}%</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="text-white/80">UV {conditions.uvIndex}</span>
+            <span className="text-white/80">UV {bestTimeInWindow.conditions.uvIndex}</span>
           </div>
         </div>
       </div>

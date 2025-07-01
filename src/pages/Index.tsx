@@ -3,12 +3,12 @@ import React from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
-import { getCurrentWeather, getYesterdayWeather, getBestRunningTime, getComparisonData } from '../utils/weatherService';
+import { getCurrentWeather, getYesterdayWeather, getHourlyWeatherData, getComparisonData } from '../utils/weatherService';
 
 const Index = () => {
   const currentWeather = getCurrentWeather();
   const yesterdayWeather = getYesterdayWeather();
-  const bestTime = getBestRunningTime();
+  const hourlyData = getHourlyWeatherData();
   const comparisonData = getComparisonData();
 
   return (
@@ -26,11 +26,7 @@ const Index = () => {
         <div className="grid gap-8 max-w-6xl mx-auto">
           {/* Best Time Section */}
           <div className="col-span-full">
-            <BestTimeCard 
-              bestTime={bestTime.time}
-              reason={bestTime.reason}
-              conditions={bestTime.conditions}
-            />
+            <BestTimeCard hourlyData={hourlyData} />
           </div>
 
           {/* Weather Stats Grid */}
