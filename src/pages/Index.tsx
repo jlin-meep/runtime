@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import BestTimeCard from '../components/BestTimeCard';
 import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import Map from '../components/Map';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
+
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
@@ -15,6 +17,7 @@ const Index = () => {
 
   // Get Mapbox token from localStorage
   const mapboxToken = localStorage.getItem('mapbox_token') || '';
+
   const reverseGeocode = async (coordinates: [number, number]): Promise<string> => {
     if (!mapboxToken) return 'Unknown Location';
     try {
@@ -39,6 +42,7 @@ const Index = () => {
     }
     return 'Unknown Location';
   };
+
   const loadWeatherData = async (isLocationChange = false) => {
     try {
       console.log('Loading weather data for location:', locationName, userLocation);
@@ -75,6 +79,7 @@ const Index = () => {
       loadWeatherData(true);
     }
   }, [userLocation]);
+
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
     console.log('Location change requested:', coordinates, address);
     setUserLocation(coordinates);
@@ -89,16 +94,21 @@ const Index = () => {
     }
     console.log('Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
   };
+
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="text-6xl mb-4">🌤️</div>
           <h2 className="text-2xl font-bold mb-2">Loading Weather Data</h2>
           <p className="text-white/80">Fetching data for {locationName}...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">She's a Runner, She's a Track Star 🏃🏻‍♀️</h1>
@@ -116,7 +126,11 @@ const Index = () => {
 
           {/* Best Time Section */}
           <div className="col-span-full">
-            <BestTimeCard hourlyData={hourlyData} locationName={locationName} />
+            <BestTimeCard 
+              hourlyData={hourlyData} 
+              locationName={locationName} 
+              currentWeather={currentWeather}
+            />
           </div>
 
           {/* Weather Stats Grid */}
@@ -137,6 +151,8 @@ const Index = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

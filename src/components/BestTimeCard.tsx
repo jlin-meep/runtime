@@ -15,12 +15,24 @@ interface TimeSlot {
   uvIndex: number;
 }
 
+interface WeatherData {
+  temperature: number;
+  windSpeed: number;
+  cloudCoverage: number;
+  uvIndex: number;
+}
+
 interface BestTimeCardProps {
   hourlyData: TimeSlot[];
   locationName?: string;
+  currentWeather?: WeatherData;
 }
 
-const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 'Your Location' }) => {
+const BestTimeCard: React.FC<BestTimeCardProps> = ({ 
+  hourlyData, 
+  locationName = 'Your Location',
+  currentWeather 
+}) => {
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
 
@@ -122,19 +134,22 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ hourlyData, locationName = 
     
     const displayTime = isNow ? "Now" : bestTime.time;
 
+    // Use current weather data if the suggested time is "Now", otherwise use forecast data
+    const conditions = isNow && currentWeather ? currentWeather : {
+      temperature: bestTime.temperature,
+      windSpeed: bestTime.windSpeed,
+      cloudCoverage: bestTime.cloudCoverage,
+      uvIndex: bestTime.uvIndex
+    };
+
     return {
       time: displayTime,
       originalTime: bestTime.time,
       isNow,
       reason: getReason(bestTime),
-      conditions: {
-        temperature: bestTime.temperature,
-        windSpeed: bestTime.windSpeed,
-        cloudCoverage: bestTime.cloudCoverage,
-        uvIndex: bestTime.uvIndex
-      }
+      conditions
     };
-  }, [halfHourlyData, timeWindow, runDuration]);
+  }, [halfHourlyData, timeWindow, runDuration, currentWeather]);
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
