@@ -22,6 +22,7 @@ const Index = () => {
     if (!mapboxToken) return 'Unknown Location';
     try {
       const [lng, lat] = coordinates;
+      console.log('🗺️ Reverse geocoding coordinates:', [lng, lat]);
       const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=neighborhood,locality,place`);
       if (!response.ok) throw new Error('Reverse geocoding failed');
       const data = await response.json();
@@ -29,38 +30,58 @@ const Index = () => {
         // Try to get neighborhood first, then locality
         const neighborhood = data.features.find(f => f.place_type.includes('neighborhood'));
         const locality = data.features.find(f => f.place_type.includes('locality'));
+        let locationName;
         if (neighborhood) {
-          return neighborhood.text + (locality ? `, ${locality.text}` : '');
+          locationName = neighborhood.text + (locality ? `, ${locality.text}` : '');
         } else if (locality) {
-          return locality.place_name;
+          locationName = locality.place_name;
         } else {
-          return data.features[0].place_name;
+          locationName = data.features[0].place_name;
         }
+        console.log('✅ Location name resolved:', locationName);
+        return locationName;
       }
     } catch (error) {
-      console.error('Reverse geocoding error:', error);
+      console.error('❌ Reverse geocoding error:', error);
     }
     return 'Unknown Location';
   };
 
   const loadWeatherData = async (isLocationChange = false) => {
     try {
-      console.log('Loading weather data for location:', locationName, userLocation);
+      console.log('🌤️ Loading weather data for location:', locationName, userLocation);
 
       // Only show weather loading for location changes after initial load
       if (isLocationChange && !loading) {
         setWeatherLoading(true);
       }
 
-      // Update weather service location
+      // CRITICAL: Update weather service location FIRST before any API calls
       updateWeatherLocation(userLocation);
-      const [current, hourly, comparison] = await Promise.all([getCurrentWeather(), getHourlyWeatherData(), getComparisonData()]);
+      
+      // Add a small delay to ensure location is set properly
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('📊 Fetching weather data from APIs...');
+      const [current, hourly, comparison] = await Promise.all([
+        getCurrentWeather(), 
+        getHourlyWeatherData(), 
+        getComparisonData()
+      ]);
+      
+      console.log('✅ Weather data loaded:', {
+        current: current,
+        hourlySlots: hourly.length,
+        comparison: comparison,
+        location: userLocation
+      });
+      
       setCurrentWeather(current);
       setHourlyData(hourly);
       setComparisonData(comparison);
-      console.log('Weather data loaded successfully for:', locationName);
+      
     } catch (error) {
-      console.error('Error loading weather data:', error);
+      console.error('❌ Error loading weather data:', error);
     } finally {
       setLoading(false);
       setWeatherLoading(false);
@@ -69,30 +90,34 @@ const Index = () => {
 
   // Initial load
   useEffect(() => {
+    console.log('🚀 Initial app load');
     loadWeatherData();
   }, []);
 
   // Reload weather data when location changes (but don't reset loading state)
   useEffect(() => {
     if (!loading) {
+      console.log('📍 Location changed, reloading weather data:', userLocation);
       // Only reload if we're not in initial loading state
       loadWeatherData(true);
     }
   }, [userLocation]);
 
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
-    console.log('Location change requested:', coordinates, address);
+    console.log('🎯 Location change requested:', coordinates, address);
     setUserLocation(coordinates);
 
     // Update location name
     if (address) {
+      console.log('📍 Using provided address:', address);
       setLocationName(address);
     } else {
       // Use reverse geocoding to get location name
+      console.log('🔍 Reverse geocoding new location...');
       const geocodedName = await reverseGeocode(coordinates);
       setLocationName(geocodedName);
     }
-    console.log('Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
+    console.log('✅ Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
   };
 
   if (loading) {
@@ -140,10 +165,10 @@ const Index = () => {
             {comparisonData && <ComparisonCard data={comparisonData} />}
           </div>
 
-          {/* Additional Info */}
+          {/* Debug Info */}
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 text-center">
             <p className="text-white/90 text-sm mb-2">
-              🌦️ Weather data from National Weather Service stations near your location
+              🌦️ Weather data from Open-Meteo API for coordinates: [{userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}]
             </p>
             <p className="text-white/70 text-xs">
               Recommendations based on current conditions and hourly forecasts for {locationName}

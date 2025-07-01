@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Clock, Sun, Timer } from 'lucide-react';
+import { Clock, Sun, Timer, Info } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -13,6 +13,14 @@ interface TimeSlot {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
+  scoreBreakdown?: {
+    windScore: number;
+    uvScore: number;
+    tempScore: number;
+    cloudScore: number;
+    currentTimeBonus: number;
+    total: number;
+  };
 }
 
 interface WeatherData {
@@ -35,6 +43,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 }) => {
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
+  const [showScoreDetails, setShowScoreDetails] = useState(false);
 
   // Helper functions moved above useMemo hooks
   const formatTime = (hour: number) => {
@@ -113,65 +122,46 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       current.score > best.score ? current : best
     );
 
+    console.log('🎯 Best time analysis:', {
+      time: bestTime.time,
+      score: bestTime.score,
+      conditions: {
+        temp: bestTime.temperature,
+        wind: bestTime.windSpeed,
+        clouds: bestTime.cloudCoverage,
+        uv: bestTime.uvIndex
+      },
+      scoreBreakdown: bestTime.scoreBreakdown,
+      currentWeather: currentWeather
+    });
+
     const getDetailedReason = (slot: TimeSlot, conditions: WeatherData): string => {
       const temp = Math.round(conditions.temperature);
       const futureSlots = halfHourlyData.filter(s => s.hour > slot.hour);
       
-      // Analyze future conditions
-      const futureTemps = futureSlots.map(s => s.temperature);
-      const futureWinds = futureSlots.map(s => s.windSpeed);
-      const futureUVs = futureSlots.map(s => s.uvIndex);
-      const futureClouds = futureSlots.map(s => s.cloudCoverage);
-      
-      let reason = `${temp}°F with `;
-      
-      // Wind analysis
-      if (futureWinds.length > 0) {
-        const avgFutureWind = futureWinds.reduce((a, b) => a + b, 0) / futureWinds.length;
-        if (avgFutureWind > conditions.windSpeed + 3) {
-          reason += `calm winds before they pick up later (winds rising to ${Math.round(avgFutureWind)} mph)`;
-        } else if (avgFutureWind < conditions.windSpeed - 3) {
-          reason += `moderate winds that will calm down later`;
-        } else {
-          reason += `steady wind conditions`;
-        }
-      } else {
-        reason += `${Math.round(conditions.windSpeed)} mph winds`;
-      }
+      let reason = `${temp}°F with ${Math.round(conditions.windSpeed)} mph winds`;
       
       // UV analysis
-      if (futureUVs.length > 0) {
-        const maxFutureUV = Math.max(...futureUVs);
-        const avgFutureUV = futureUVs.reduce((a, b) => a + b, 0) / futureUVs.length;
-        
-        if (conditions.uvIndex <= 3 && maxFutureUV > 6) {
-          reason += ` and low UV before it intensifies later (peaks at UV ${Math.round(maxFutureUV)})`;
-        } else if (conditions.uvIndex > 6 && avgFutureUV < 4) {
-          reason += ` - UV will drop significantly later for evening runs`;
-        } else if (conditions.uvIndex > 7) {
-          reason += ` but high UV exposure (UV ${conditions.uvIndex})`;
-        }
+      if (conditions.uvIndex <= 2) {
+        reason += ` and low UV exposure`;
+      } else if (conditions.uvIndex <= 5) {
+        reason += ` and moderate UV levels`;
+      } else if (conditions.uvIndex > 7) {
+        reason += ` but high UV exposure (UV ${conditions.uvIndex})`;
       }
       
-      // Temperature trends
-      if (futureTemps.length > 0) {
-        const avgFutureTemp = futureTemps.reduce((a, b) => a + b, 0) / futureTemps.length;
-        const tempDiff = avgFutureTemp - temp;
-        
-        if (tempDiff > 5) {
-          reason += ` before temperatures rise to ${Math.round(avgFutureTemp)}°F`;
-        } else if (tempDiff < -5) {
-          reason += ` before cooling to ${Math.round(avgFutureTemp)}°F`;
+      // Compare with current conditions if available
+      if (currentWeather && slot.hour !== currentHour) {
+        if (conditions.windSpeed < currentWeather.windSpeed - 3) {
+          reason += ` - winds will calm down from current ${currentWeather.windSpeed} mph`;
+        } else if (conditions.windSpeed > currentWeather.windSpeed + 3) {
+          reason += ` - winds will pick up from current ${currentWeather.windSpeed} mph`;
         }
-      }
-      
-      // Cloud/rain analysis
-      if (futureClouds.length > 0) {
-        const avgFutureClouds = futureClouds.reduce((a, b) => a + b, 0) / futureClouds.length;
-        if (avgFutureClouds > conditions.cloudCoverage + 20) {
-          reason += ` with increasing clouds later`;
-        } else if (conditions.cloudCoverage > 70 && avgFutureClouds < 40) {
-          reason += ` with clearing skies ahead`;
+        
+        if (conditions.uvIndex < currentWeather.uvIndex - 1) {
+          reason += ` with lower UV than now (${currentWeather.uvIndex})`;
+        } else if (conditions.uvIndex > currentWeather.uvIndex + 2) {
+          reason += ` with higher UV than now (${currentWeather.uvIndex})`;
         }
       }
       
@@ -198,7 +188,19 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       originalTime: bestTime.time,
       isNow,
       reason: getDetailedReason(bestTime, conditions),
-      conditions
+      conditions,
+      scoreBreakdown: bestTime.scoreBreakdown,
+      allFilteredOptions: filteredData.map(slot => ({
+        time: slot.time,
+        score: slot.score,
+        scoreBreakdown: slot.scoreBreakdown,
+        conditions: {
+          temperature: slot.temperature,
+          windSpeed: slot.windSpeed,
+          cloudCoverage: slot.cloudCoverage,
+          uvIndex: slot.uvIndex
+        }
+      }))
     };
   }, [halfHourlyData, timeWindow, runDuration, currentWeather]);
 
@@ -211,10 +213,17 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           <div className="p-2 md:p-3 bg-white/20 rounded-xl">
             <Clock className="w-6 h-6 md:w-8 md:h-8 text-yellow-300" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl md:text-2xl font-bold text-white">Best Time to Start Running</h2>
             <p className="text-white/80 text-sm md:text-base">{locationName}</p>
           </div>
+          <button
+            onClick={() => setShowScoreDetails(!showScoreDetails)}
+            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            title="Show scoring details"
+          >
+            <Info className="w-4 h-4 text-white" />
+          </button>
         </div>
 
         {/* Controls - Stack on mobile, side by side on desktop */}
@@ -294,7 +303,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
             }
           </p>
           
-          <div className="flex flex-wrap justify-center gap-3 md:gap-6 text-sm">
+          <div className="flex flex-wrap justify-center gap-3 md:gap-6 text-sm mb-4">
             <div className="flex items-center space-x-1">
               <Sun className="w-4 h-4 text-yellow-300" />
               <span className="text-white/80">{Math.round(bestTimeInWindow.conditions.temperature)}°F</span>
@@ -309,6 +318,22 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
               <span className="text-white/80">UV {bestTimeInWindow.conditions.uvIndex}</span>
             </div>
           </div>
+
+          {/* Score Breakdown */}
+          {showScoreDetails && bestTimeInWindow.scoreBreakdown && (
+            <div className="bg-white/10 rounded-xl p-4 mt-4">
+              <h4 className="text-white font-semibold mb-3">Scoring Breakdown (Total: {bestTimeInWindow.scoreBreakdown.total}/100)</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-white/80">Wind: {bestTimeInWindow.scoreBreakdown.windScore}/40</div>
+                <div className="text-white/80">UV: {bestTimeInWindow.scoreBreakdown.uvScore}/30</div>
+                <div className="text-white/80">Temperature: {bestTimeInWindow.scoreBreakdown.tempScore}/20</div>
+                <div className="text-white/80">Clouds: {bestTimeInWindow.scoreBreakdown.cloudScore}/10</div>
+              </div>
+              <div className="text-white/70 text-xs mt-2">
+                Higher scores indicate better running conditions. Wind and UV are weighted most heavily.
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-4 md:py-6">

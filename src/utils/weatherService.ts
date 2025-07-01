@@ -21,6 +21,14 @@ export interface TimeSlot {
   windSpeed: number;
   cloudCoverage: number;
   uvIndex: number;
+  scoreBreakdown?: {
+    windScore: number;
+    uvScore: number;
+    tempScore: number;
+    cloudScore: number;
+    currentTimeBonus: number;
+    total: number;
+  };
 }
 
 export interface WeatherStation {
@@ -38,13 +46,19 @@ const fallbackWeatherData: WeatherData = {
   uvIndex: 2
 };
 
+// Track current location for debugging
+let currentLocationDebug: [number, number] = [-122.4364, 37.7751];
+
 // Add location update function
 export const updateWeatherLocation = (coordinates: [number, number]) => {
+  currentLocationDebug = coordinates;
   setCurrentLocation(coordinates);
+  console.log('🌍 Weather location updated to:', coordinates);
 };
 
 export const getCurrentWeather = async (): Promise<WeatherData> => {
   try {
+    console.log('🌤️ Fetching current weather for location:', currentLocationDebug);
     const weatherData = await fetchCurrentWeather();
     
     if (weatherData?.current) {
@@ -57,14 +71,14 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         uvIndex: Math.round(current.uv_index)
       };
       
-      console.log('Current weather from Open-Meteo:', weather);
+      console.log('✅ Current weather from Open-Meteo:', weather, 'for location:', currentLocationDebug);
       return weather;
     }
     
-    console.warn('No valid weather data found, using fallback');
+    console.warn('⚠️ No valid weather data found, using fallback');
     return fallbackWeatherData;
   } catch (error) {
-    console.error('Error fetching current weather:', error);
+    console.error('❌ Error fetching current weather:', error);
     return fallbackWeatherData;
   }
 };
@@ -82,6 +96,7 @@ export const getYesterdayWeather = (): WeatherData => {
 
 export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
   try {
+    console.log('📊 Fetching hourly forecast for location:', currentLocationDebug);
     const forecast = await fetchHourlyForecast();
     
     if (forecast?.hourly) {
@@ -97,12 +112,8 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         const cloudCoverage = Math.round(hourly.cloud_cover[i]);
         const uvIndex = Math.round(hourly.uv_index[i]);
         
-        // Calculate score prioritizing low wind, low UV, comfortable temp
-        const windScore = Math.max(0, (25 - windSpeed) / 25) * 40;
-        const uvScore = Math.max(0, (8 - uvIndex) / 8) * 30;
-        const tempScore = Math.max(0, (100 - Math.abs(temperature - 65)) / 100) * 20;
-        const cloudScore = Math.max(0, (100 - cloudCoverage) / 100) * 10;
-        const score = Math.round(windScore + uvScore + tempScore + cloudScore);
+        // Calculate detailed score breakdown
+        const scoreBreakdown = calculateDetailedScore(temperature, windSpeed, cloudCoverage, uvIndex, hour);
         
         timeSlots.push({
           time: time.toLocaleTimeString('en-US', { 
@@ -111,21 +122,24 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
             hour12: true 
           }),
           hour,
-          score,
+          score: scoreBreakdown.total,
           temperature,
           windSpeed,
           cloudCoverage,
-          uvIndex
+          uvIndex,
+          scoreBreakdown
         });
       }
       
+      console.log('✅ Hourly forecast processed:', timeSlots.length, 'slots for location:', currentLocationDebug);
       return timeSlots;
     }
   } catch (error) {
-    console.error('Error fetching hourly weather data:', error);
+    console.error('❌ Error fetching hourly weather data:', error);
   }
   
   // Fallback to mock data if API fails
+  console.log('⚠️ Using fallback hourly data');
   return [
     { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0 },
     { time: "7:00 AM", hour: 7, score: 90, temperature: 56, windSpeed: 9, cloudCoverage: 25, uvIndex: 1 },
@@ -146,6 +160,64 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
   ];
 };
 
+// New detailed scoring function with transparency
+const calculateDetailedScore = (temperature: number, windSpeed: number, cloudCoverage: number, uvIndex: number, hour: number) => {
+  // Wind scoring - heavily penalize winds over 15mph
+  let windScore;
+  if (windSpeed <= 10) {
+    windScore = 40; // Perfect conditions
+  } else if (windSpeed <= 15) {
+    windScore = Math.max(0, (15 - windSpeed) / 5) * 30; // Good conditions
+  } else {
+    windScore = Math.max(0, (25 - windSpeed) / 10) * 15; // Poor conditions
+  }
+  
+  // UV scoring - favor moderate UV levels (2-5), penalize very low and very high
+  let uvScore;
+  if (uvIndex >= 2 && uvIndex <= 5) {
+    uvScore = 30; // Ideal UV range
+  } else if (uvIndex < 2) {
+    uvScore = 20; // Low UV (early/late)
+  } else if (uvIndex <= 7) {
+    uvScore = Math.max(0, (8 - uvIndex) / 3) * 15; // Manageable UV
+  } else {
+    uvScore = 5; // Dangerous UV
+  }
+  
+  // Temperature scoring - ideal range is 60-75°F
+  let tempScore;
+  if (temperature >= 60 && temperature <= 75) {
+    tempScore = 20; // Perfect temperature range
+  } else {
+    tempScore = Math.max(0, (100 - Math.abs(temperature - 67.5)) / 100) * 20;
+  }
+  
+  // Cloud coverage scoring - prefer some clouds for comfort
+  let cloudScore;
+  if (cloudCoverage >= 20 && cloudCoverage <= 60) {
+    cloudScore = 10; // Some cloud cover is good
+  } else {
+    cloudScore = Math.max(0, (100 - Math.abs(cloudCoverage - 40)) / 100) * 10;
+  }
+  
+  // Small bonus for running sooner when conditions are good
+  const now = new Date();
+  const currentHour = now.getHours();
+  const timeDiff = Math.abs(hour - currentHour);
+  const currentTimeBonus = timeDiff <= 1 ? 3 : 0;
+  
+  const total = Math.round(windScore + uvScore + tempScore + cloudScore + currentTimeBonus);
+  
+  return {
+    windScore: Math.round(windScore),
+    uvScore: Math.round(uvScore),
+    tempScore: Math.round(tempScore),
+    cloudScore: Math.round(cloudScore),
+    currentTimeBonus,
+    total
+  };
+};
+
 export const getWeatherStations = async (): Promise<WeatherStation[]> => {
   // Open-Meteo doesn't expose individual weather stations
   // Return empty array since this feature isn't relevant with Open-Meteo
@@ -162,49 +234,14 @@ export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: num
     return null;
   }
 
-  // Calculate weighted score prioritizing: 1) wind under 10mph, 2) moderate UV, 3) temp close to 70°F, 4) cloud coverage
-  const calculatePriorityScore = (slot: TimeSlot): number => {
-    // Wind scoring - heavily penalize winds over 10mph
-    let windScore;
-    if (slot.windSpeed <= 10) {
-      windScore = Math.max(0, (10 - slot.windSpeed) / 10) * 40; // Full 40% if under 10mph
-    } else {
-      windScore = Math.max(0, (20 - slot.windSpeed) / 20) * 20; // Reduced scoring above 10mph
-    }
-    
-    // UV scoring - favor moderate UV levels (3-6), penalize very low and very high
-    let uvScore;
-    if (slot.uvIndex >= 3 && slot.uvIndex <= 6) {
-      uvScore = 30; // Full points for moderate UV
-    } else if (slot.uvIndex < 3) {
-      uvScore = 20; // Decent points for low UV
-    } else if (slot.uvIndex <= 8) {
-      uvScore = 15; // Some points for high but manageable UV
-    } else {
-      uvScore = 5; // Very few points for extreme UV
-    }
-    
-    // Temperature scoring - ideal temp is 70°F
-    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 70)) / 100) * 20;
-    
-    // Cloud coverage scoring - prefer less clouds
-    const cloudScore = Math.max(0, (100 - slot.cloudCoverage) / 100) * 10;
-    
-    // Small bonus for current time (within 1 hour) to favor running sooner when conditions are good
-    const now = new Date();
-    const currentHour = now.getHours();
-    const timeDiff = Math.abs(slot.hour - currentHour);
-    const currentTimeBonus = timeDiff <= 1 ? 5 : 0;
-    
-    return windScore + uvScore + tempScore + cloudScore + currentTimeBonus;
-  };
-
-  // Find the time slot with the highest priority score
-  return filteredData.reduce((best, current) => {
-    const currentScore = calculatePriorityScore(current);
-    const bestScore = calculatePriorityScore(best);
-    return currentScore > bestScore ? current : best;
+  // Find the time slot with the highest score
+  const bestTime = filteredData.reduce((best, current) => {
+    return current.score > best.score ? current : best;
   });
+
+  console.log('🏆 Best time in window:', bestTime.time, 'Score:', bestTime.score, 'Breakdown:', bestTime.scoreBreakdown);
+  
+  return bestTime;
 };
 
 export const getBestRunningTime = (): { time: string; reason: string; conditions: WeatherData } => {
@@ -219,6 +256,7 @@ export const getBestRunningTime = (): { time: string; reason: string; conditions
 };
 
 export const getComparisonData = async () => {
+  console.log('📊 Getting comparison data for location:', currentLocationDebug);
   const current = await getCurrentWeather();
   const previous = getYesterdayWeather();
   
