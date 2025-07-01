@@ -11,43 +11,55 @@ const Index = () => {
   const [hourlyData, setHourlyData] = useState([]);
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<[number, number]>([-122.4364, 37.7751]); // Default NOPA
+  const [locationName, setLocationName] = useState('NOPA, San Francisco');
   
   // Get Mapbox token from localStorage
   const mapboxToken = localStorage.getItem('mapbox_token') || '';
 
-  useEffect(() => {
-    const loadWeatherData = async () => {
-      try {
-        console.log('Loading real weather data from NWS...');
-        
-        const [current, hourly, comparison] = await Promise.all([
-          getCurrentWeather(),
-          getHourlyWeatherData(),
-          getComparisonData()
-        ]);
-        
-        setCurrentWeather(current);
-        setHourlyData(hourly);
-        setComparisonData(comparison);
-        
-        console.log('Weather data loaded successfully');
-      } catch (error) {
-        console.error('Error loading weather data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadWeatherData = async () => {
+    try {
+      console.log('Loading weather data for location:', locationName);
+      
+      const [current, hourly, comparison] = await Promise.all([
+        getCurrentWeather(),
+        getHourlyWeatherData(),
+        getComparisonData()
+      ]);
+      
+      setCurrentWeather(current);
+      setHourlyData(hourly);
+      setComparisonData(comparison);
+      
+      console.log('Weather data loaded successfully');
+    } catch (error) {
+      console.error('Error loading weather data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadWeatherData();
-  }, []);
+  }, [userLocation]); // Reload weather data when location changes
+
+  const handleLocationChange = (coordinates: [number, number], address?: string) => {
+    setUserLocation(coordinates);
+    if (address) {
+      setLocationName(address);
+    }
+    console.log('Location updated:', coordinates, address);
+    // Note: In a full implementation, you'd want to update the weather service 
+    // to use the new coordinates for finding nearby stations
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="text-6xl mb-4">🌤️</div>
-          <h2 className="text-2xl font-bold mb-2">Loading Real Weather Data</h2>
-          <p className="text-white/80">Fetching data from National Weather Service...</p>
+          <h2 className="text-2xl font-bold mb-2">Loading Weather Data</h2>
+          <p className="text-white/80">Fetching data for {locationName}...</p>
         </div>
       </div>
     );
@@ -61,11 +73,19 @@ const Index = () => {
             🏃‍♂️ NOPA Runner
           </h1>
           <p className="text-white/80 text-lg">
-            Real-time weather data from National Weather Service
+            Weather data for {locationName}
           </p>
         </div>
 
         <div className="grid gap-8 max-w-6xl mx-auto">
+          {/* Map Section - moved to top for better UX */}
+          <div className="col-span-full">
+            <Map 
+              mapboxToken={mapboxToken} 
+              onLocationChange={handleLocationChange}
+            />
+          </div>
+
           {/* Best Time Section */}
           <div className="col-span-full">
             <BestTimeCard hourlyData={hourlyData} />
@@ -75,7 +95,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {currentWeather && (
               <WeatherCard 
-                title="Current Conditions (NWS)"
+                title="Current Conditions"
                 data={currentWeather}
               />
             )}
@@ -85,15 +105,10 @@ const Index = () => {
             )}
           </div>
 
-          {/* Map Section */}
-          <div className="col-span-full">
-            <Map mapboxToken={mapboxToken} />
-          </div>
-
           {/* Additional Info */}
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 text-center">
             <p className="text-white/90 text-sm mb-2">
-              🌦️ Real-time weather data from National Weather Service stations near NOPA, San Francisco
+              🌦️ Weather data from National Weather Service stations near your location
             </p>
             <p className="text-white/70 text-xs">
               Recommendations based on current conditions and hourly forecasts

@@ -1,4 +1,3 @@
-
 interface NWSPoint {
   properties: {
     gridId: string;
@@ -12,13 +11,13 @@ interface NWSPoint {
 
 interface NWSStation {
   id: string;
+  geometry: {
+    coordinates: [number, number];
+  };
   properties: {
     stationIdentifier: string;
     name: string;
     timeZone: string;
-    geometry: {
-      coordinates: [number, number];
-    };
   };
 }
 
