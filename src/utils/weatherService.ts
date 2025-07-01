@@ -162,15 +162,41 @@ export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: num
     return null;
   }
 
-  // Calculate weighted score prioritizing: 1) lowest wind, 2) lowest UV, 3) temperature, 4) cloud coverage
+  // Calculate weighted score prioritizing: 1) wind under 10mph, 2) moderate UV, 3) temp close to 70°F, 4) cloud coverage
   const calculatePriorityScore = (slot: TimeSlot): number => {
-    // Normalize values to 0-1 range and invert so lower values get higher scores
-    const windScore = Math.max(0, (20 - slot.windSpeed) / 20) * 40; // 40% weight - most important
-    const uvScore = Math.max(0, (10 - slot.uvIndex) / 10) * 30; // 30% weight
-    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 70)) / 100) * 20; // 20% weight (ideal temp ~70°F)
-    const cloudScore = Math.max(0, (100 - slot.cloudCoverage) / 100) * 10; // 10% weight - least important
+    // Wind scoring - heavily penalize winds over 10mph
+    let windScore;
+    if (slot.windSpeed <= 10) {
+      windScore = Math.max(0, (10 - slot.windSpeed) / 10) * 40; // Full 40% if under 10mph
+    } else {
+      windScore = Math.max(0, (20 - slot.windSpeed) / 20) * 20; // Reduced scoring above 10mph
+    }
     
-    return windScore + uvScore + tempScore + cloudScore;
+    // UV scoring - favor moderate UV levels (3-6), penalize very low and very high
+    let uvScore;
+    if (slot.uvIndex >= 3 && slot.uvIndex <= 6) {
+      uvScore = 30; // Full points for moderate UV
+    } else if (slot.uvIndex < 3) {
+      uvScore = 20; // Decent points for low UV
+    } else if (slot.uvIndex <= 8) {
+      uvScore = 15; // Some points for high but manageable UV
+    } else {
+      uvScore = 5; // Very few points for extreme UV
+    }
+    
+    // Temperature scoring - ideal temp is 70°F
+    const tempScore = Math.max(0, (100 - Math.abs(slot.temperature - 70)) / 100) * 20;
+    
+    // Cloud coverage scoring - prefer less clouds
+    const cloudScore = Math.max(0, (100 - slot.cloudCoverage) / 100) * 10;
+    
+    // Small bonus for current time (within 1 hour) to favor running sooner when conditions are good
+    const now = new Date();
+    const currentHour = now.getHours();
+    const timeDiff = Math.abs(slot.hour - currentHour);
+    const currentTimeBonus = timeDiff <= 1 ? 5 : 0;
+    
+    return windScore + uvScore + tempScore + cloudScore + currentTimeBonus;
   };
 
   // Find the time slot with the highest priority score
