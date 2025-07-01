@@ -1,33 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
-import { Clock, Sun, Timer, Info } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface TimeSlot {
-  time: string;
-  hour: number;
-  minute: number;
-  score: number;
-  temperature: number;
-  windSpeed: number;
-  cloudCoverage: number;
-  uvIndex: number;
-  scoreBreakdown?: {
-    windScore: number;
-    uvScore: number;
-    tempScore: number;
-    cloudScore: number;
-    currentTimeBonus: number;
-    total: number;
-  };
-}
-
-interface WeatherData {
-  temperature: number;
-  windSpeed: number;
-  cloudCoverage: number;
-  uvIndex: number;
-}
+import { Clock, Info } from 'lucide-react';
+import { TimeSlot, WeatherData } from '../utils/weatherTypes';
+import { formatTimeWithMinutes } from '../utils/timeUtils';
+import TimeWindowControls from './BestTimeCard/TimeWindowControls';
+import BestTimeRecommendation from './BestTimeCard/BestTimeRecommendation';
 
 interface BestTimeCardProps {
   hourlyData: TimeSlot[];
@@ -43,24 +20,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
   const [timeWindow, setTimeWindow] = useState([9, 20]); // 9 AM to 8 PM
   const [runDuration, setRunDuration] = useState(1); // Default: 1 hour
   const [showScoreDetails, setShowScoreDetails] = useState(false);
-
-  // Helper functions moved above useMemo hooks
-  const formatTime = (hour: number) => {
-    if (hour === 0) return '12 AM';
-    if (hour < 12) return `${hour} AM`;
-    if (hour === 12) return '12 PM';
-    return `${hour - 12} PM`;
-  };
-
-  const formatTimeWithMinutes = (hour: number, minute: number) => {
-    if (minute === 0) {
-      return formatTime(hour);
-    } else {
-      const period = hour < 12 ? 'AM' : 'PM';
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
-    }
-  };
 
   // Generate half-hour time slots from hourly data
   const halfHourlyData = useMemo(() => {
@@ -87,7 +46,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
       });
     });
     
-    return slots.sort((a, b) => a.hour === b.hour ? a.minute - b.minute : a.hour - b.hour);
+    return slots.sort((a, b) => a.hour === b.hour ? a.minute! - b.minute! : a.hour - b.hour);
   }, [hourlyData]);
 
   const bestTimeInWindow = useMemo(() => {
@@ -103,7 +62,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
     
     // Filter data to only include times within the adjusted window and after current time
     const filteredData = halfHourlyData.filter(slot => {
-      const slotTotalMinutes = slot.hour * 60 + slot.minute;
+      const slotTotalMinutes = slot.hour * 60 + (slot.minute || 0);
       const currentTotalMinutes = currentHour * 60 + currentMinute;
       const windowStartMinutes = adjustedStartHour * 60;
       const windowEndMinutes = adjustedEndHour * 60;
@@ -136,7 +95,6 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 
     const getDetailedReason = (slot: TimeSlot, conditions: WeatherData): string => {
       const temp = Math.round(conditions.temperature);
-      const futureSlots = halfHourlyData.filter(s => s.hour > slot.hour);
       
       let reason = `${temp}°F with ${Math.round(conditions.windSpeed)} mph winds`;
       
@@ -168,7 +126,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
     };
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
-    const bestTimeTotalMinutes = bestTime.hour * 60 + bestTime.minute;
+    const bestTimeTotalMinutes = bestTime.hour * 60 + (bestTime.minute || 0);
     const currentTotalMinutes = currentHour * 60 + currentMinute;
     const isNow = Math.abs(bestTimeTotalMinutes - currentTotalMinutes) <= 30;
     
@@ -205,7 +163,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/30 shadow-2xl">
-      {/* Header Section - Mobile First Layout */}
+      {/* Header Section */}
       <div className="flex flex-col space-y-4 mb-6">
         {/* Title and Location */}
         <div className="flex items-center space-x-3">
@@ -225,115 +183,21 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
           </button>
         </div>
 
-        {/* Controls - Stack on mobile, side by side on desktop */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Run Duration Selector */}
-          <div className="flex-1 p-3 bg-white/10 rounded-xl border border-white/20">
-            <div className="flex items-center space-x-2 mb-2">
-              <Timer className="w-4 h-4 text-white" />
-              <h3 className="text-white font-semibold text-sm">Run Duration</h3>
-            </div>
-            <Select value={runDuration.toString()} onValueChange={(value) => setRunDuration(parseFloat(value))}>
-              <SelectTrigger className="w-full sm:w-24 bg-white/10 border-white/20 text-white text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0.5">30 min</SelectItem>
-                <SelectItem value="1">1 hr</SelectItem>
-                <SelectItem value="1.5">1.5 hr</SelectItem>
-                <SelectItem value="2">2 hr</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Window Slider */}
-          <div className="flex-1 sm:flex-2 p-3 bg-white/10 rounded-xl border border-white/20">
-            <h3 className="text-white font-semibold text-sm mb-3">Available Window</h3>
-            <div className="relative mb-4">
-              <Slider
-                value={timeWindow}
-                onValueChange={setTimeWindow}
-                max={23}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-              {/* Time labels positioned under each handle */}
-              <div className="absolute -bottom-2 left-0 right-0">
-                <div 
-                  className="absolute text-white text-xs whitespace-nowrap"
-                  style={{ 
-                    left: `${(timeWindow[0] / 23) * 100}%`, 
-                    transform: 'translateX(-50%)' 
-                  }}
-                >
-                  {formatTime(timeWindow[0])}
-                </div>
-                <div 
-                  className="absolute text-white text-xs whitespace-nowrap"
-                  style={{ 
-                    left: `${(timeWindow[1] / 23) * 100}%`, 
-                    transform: 'translateX(-50%)' 
-                  }}
-                >
-                  {formatTime(timeWindow[1])}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Controls */}
+        <TimeWindowControls
+          timeWindow={timeWindow}
+          setTimeWindow={setTimeWindow}
+          runDuration={runDuration}
+          setRunDuration={setRunDuration}
+        />
       </div>
       
       {bestTimeInWindow ? (
-        <div className="text-center py-4 md:py-6">
-          <div className="text-4xl md:text-6xl font-bold text-white mb-2">
-            {bestTimeInWindow.time}
-            {bestTimeInWindow.isNow && (
-              <div className="text-base md:text-lg font-normal text-yellow-300 mt-1">
-                ({bestTimeInWindow.originalTime})
-              </div>
-            )}
-          </div>
-          <p className="text-white/90 text-base md:text-lg mb-2 px-2">{bestTimeInWindow.reason}</p>
-          <p className="text-white/70 text-sm mb-4 px-2">
-            {bestTimeInWindow.isNow ? 
-              `Perfect time to start your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run right now!` :
-              `Perfect start time for your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run`
-            }
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-3 md:gap-6 text-sm mb-4">
-            <div className="flex items-center space-x-1">
-              <Sun className="w-4 h-4 text-yellow-300" />
-              <span className="text-white/80">{Math.round(bestTimeInWindow.conditions.temperature)}°F</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-white/80">💨 {Math.round(bestTimeInWindow.conditions.windSpeed)} mph</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-white/80">☁️ {Math.round(bestTimeInWindow.conditions.cloudCoverage)}%</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-white/80">UV {bestTimeInWindow.conditions.uvIndex}</span>
-            </div>
-          </div>
-
-          {/* Score Breakdown */}
-          {showScoreDetails && bestTimeInWindow.scoreBreakdown && (
-            <div className="bg-white/10 rounded-xl p-4 mt-4">
-              <h4 className="text-white font-semibold mb-3">Scoring Breakdown (Total: {bestTimeInWindow.scoreBreakdown.total}/100)</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-white/80">Wind (40%): {bestTimeInWindow.scoreBreakdown.windScore}/40</div>
-                <div className="text-white/80">Temperature (30%): {bestTimeInWindow.scoreBreakdown.tempScore}/30</div>
-                <div className="text-white/80">UV (20%): {bestTimeInWindow.scoreBreakdown.uvScore}/20</div>
-                <div className="text-white/80">Clouds (10%): {bestTimeInWindow.scoreBreakdown.cloudScore}/10</div>
-              </div>
-              <div className="text-white/70 text-xs mt-2">
-                Wind conditions have the highest impact on your running score, followed by temperature comfort.
-              </div>
-            </div>
-          )}
-        </div>
+        <BestTimeRecommendation
+          bestTime={bestTimeInWindow}
+          runDuration={runDuration}
+          showScoreDetails={showScoreDetails}
+        />
       ) : (
         <div className="text-center py-4 md:py-6">
           <div className="text-white/90 text-base md:text-lg mb-2 px-2">
