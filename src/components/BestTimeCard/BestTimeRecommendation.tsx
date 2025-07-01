@@ -61,8 +61,9 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
           <PopoverContent 
             className="w-80 p-4 bg-white/95 backdrop-blur-sm border border-white/30"
             align={isMobile ? "center" : "end"}
-            side={isMobile ? "bottom" : "top"}
+            side="top"
             sideOffset={8}
+            alignOffset={isMobile ? 0 : undefined}
           >
             <div className="space-y-3">
               <p className="text-sm text-gray-800 font-medium">
