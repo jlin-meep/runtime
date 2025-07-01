@@ -26,31 +26,33 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({ bestTime, reason, condition
 
   return (
     <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="p-3 bg-white/20 rounded-xl">
-          <Clock className="w-8 h-8 text-yellow-300" />
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-3 bg-white/20 rounded-xl">
+            <Clock className="w-8 h-8 text-yellow-300" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Best Time to Run</h2>
+            <p className="text-white/80">NOPA, San Francisco</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-white">Best Time to Run</h2>
-          <p className="text-white/80">NOPA, San Francisco</p>
-        </div>
-      </div>
 
-      {/* Time Window Slider */}
-      <div className="mb-6 p-4 bg-white/10 rounded-xl border border-white/20">
-        <h3 className="text-white font-semibold mb-3">Preferred Running Window</h3>
-        <div className="space-y-3">
-          <Slider
-            value={timeWindow}
-            onValueChange={setTimeWindow}
-            max={23}
-            min={0}
-            step={1}
-            className="w-full"
-          />
-          <div className="flex justify-between text-white/80 text-sm">
-            <span>{formatTime(timeWindow[0])}</span>
-            <span>{formatTime(timeWindow[1])}</span>
+        {/* Compact Time Window Slider */}
+        <div className="w-64 p-3 bg-white/10 rounded-xl border border-white/20">
+          <h3 className="text-white font-semibold text-sm mb-2">Running Window</h3>
+          <div className="space-y-2">
+            <Slider
+              value={timeWindow}
+              onValueChange={setTimeWindow}
+              max={23}
+              min={0}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-white/80 text-xs px-1">
+              <span>{formatTime(timeWindow[0])}</span>
+              <span>{formatTime(timeWindow[1])}</span>
+            </div>
           </div>
         </div>
       </div>
