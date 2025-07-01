@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Cloud, Sun, Wind, Clock } from 'lucide-react';
 
@@ -17,10 +16,10 @@ interface WeatherCardProps {
 
 const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, className = "" }) => {
   const getUVLevel = (uv: number) => {
-    if (uv <= 2) return { level: "Low", color: "text-green-600" };
-    if (uv <= 5) return { level: "Moderate", color: "text-yellow-600" };
-    if (uv <= 7) return { level: "High", color: "text-orange-600" };
-    return { level: "Very High", color: "text-red-600" };
+    if (uv <= 2) return { level: "Low", color: "text-white" };
+    if (uv <= 5) return { level: "Moderate", color: "text-white" };
+    if (uv <= 7) return { level: "High", color: "text-white" };
+    return { level: "Very High", color: "text-white" };
   };
 
   const uvInfo = getUVLevel(data.uvIndex);
