@@ -74,21 +74,11 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
       
       console.log('📈 Raw forecast data available for', hourly.time.length, 'hours');
       
-      // Get current hour to determine how many hours we need
-      const now = new Date();
-      const currentHour = now.getHours();
+      // Process all available hours from the API (up to 48 hours)
+      // The API returns data starting from the current hour, not midnight
+      const maxHours = Math.min(48, hourly.time.length); // Use all available data
       
-      // We want to ensure we get data until at least 10 PM (22:00)
-      // So we need hours from current time through end of tomorrow if needed
-      const targetEndHour = 22; // 10 PM
-      const hoursNeeded = targetEndHour >= currentHour ? 
-        (targetEndHour - currentHour + 1) : 
-        (24 - currentHour + targetEndHour + 1);
-      
-      console.log('🕐 Current hour:', currentHour, 'Target end hour:', targetEndHour, 'Hours needed:', hoursNeeded);
-      
-      // Process available hours, but ensure we get at least through 10 PM today
-      const maxHours = Math.min(Math.max(hoursNeeded, 16), hourly.time.length);
+      console.log('🕐 Processing', maxHours, 'hours from API');
       
       for (let i = 0; i < maxHours; i++) {
         const time = new Date(hourly.time[i]);
@@ -97,6 +87,18 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         const windSpeed = Math.round(hourly.wind_speed_10m[i]);
         const cloudCoverage = Math.round(hourly.cloud_cover[i]);
         const uvIndex = Math.round(hourly.uv_index[i]);
+        
+        // Skip very early morning hours (before 6 AM) unless it's the next day
+        const now = new Date();
+        const slotDate = time.toDateString();
+        const todayDate = now.toDateString();
+        const isToday = slotDate === todayDate;
+        
+        // Only include hours from 6 AM onwards for today, but include all hours for future days
+        if (isToday && hour < 6) {
+          console.log(`⏭️ Skipping early morning hour ${hour} for today`);
+          continue;
+        }
         
         // Calculate detailed score breakdown
         const scoreBreakdown = calculateDetailedScore(temperature, windSpeed, cloudCoverage, uvIndex, hour);
@@ -129,8 +131,8 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
     console.error('❌ Error fetching hourly weather data:', error);
   }
   
-  // Fallback to mock data if API fails - ensure we cover full day
-  console.log('⚠️ Using fallback hourly data');
+  // Fallback to mock data if API fails - start from 6 AM and go through 10 PM
+  console.log('⚠️ Using fallback hourly data (6 AM - 10 PM)');
   const fallbackData = [
     { time: "6:00 AM", hour: 6, score: 85, temperature: 54, windSpeed: 8, cloudCoverage: 30, uvIndex: 0 },
     { time: "7:00 AM", hour: 7, score: 90, temperature: 56, windSpeed: 9, cloudCoverage: 25, uvIndex: 1 },
