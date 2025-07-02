@@ -4,32 +4,28 @@ import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
 import { calculateForecastRange } from '../utils/forecastUtils';
-
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(false);
-  
+
   // Load initial location from localStorage or default to NOPA
   const getInitialLocation = (): [number, number] => {
     const saved = localStorage.getItem('runningAppLocation');
     return saved ? JSON.parse(saved) : [-122.4364, 37.7751];
   };
-  
   const getInitialLocationName = (): string => {
     const savedName = localStorage.getItem('runningAppLocationName');
     return savedName || 'NOPA, San Francisco';
   };
-
   const [userLocation, setUserLocation] = useState<[number, number]>(getInitialLocation());
   const [locationName, setLocationName] = useState(getInitialLocationName());
   const [timeWindow, setTimeWindow] = useState([9, 20]); // Track time window state
 
   // Use your valid Mapbox token for reverse geocoding
   const mapboxToken = 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
-
   const reverseGeocode = async (coordinates: [number, number]): Promise<string> => {
     if (!mapboxToken) return 'Unknown Location';
     try {
@@ -58,7 +54,6 @@ const Index = () => {
     }
     return 'Unknown Location';
   };
-
   const loadWeatherData = async (isLocationChange = false) => {
     try {
       console.log('🌤️ Loading weather data for location:', locationName, userLocation);
@@ -70,28 +65,20 @@ const Index = () => {
 
       // CRITICAL: Update weather service location FIRST before any API calls
       updateWeatherLocation(userLocation);
-      
+
       // Add a small delay to ensure location is set properly
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       console.log('📊 Fetching weather data from APIs...');
-      const [current, hourly, comparison] = await Promise.all([
-        getCurrentWeather(), 
-        getHourlyWeatherData(), 
-        getComparisonData()
-      ]);
-      
+      const [current, hourly, comparison] = await Promise.all([getCurrentWeather(), getHourlyWeatherData(), getComparisonData()]);
       console.log('✅ Weather data loaded:', {
         current: current,
         hourlySlots: hourly.length,
         comparison: comparison,
         location: userLocation
       });
-      
       setCurrentWeather(current);
       setHourlyData(hourly);
       setComparisonData(comparison);
-      
     } catch (error) {
       console.error('❌ Error loading weather data:', error);
     } finally {
@@ -114,13 +101,11 @@ const Index = () => {
       loadWeatherData(true);
     }
   }, [userLocation]);
-
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
     console.log('🎯 Location change requested:', coordinates, address);
-    
+
     // Save location to localStorage
     localStorage.setItem('runningAppLocation', JSON.stringify(coordinates));
-    
     setUserLocation(coordinates);
 
     // Update location name
@@ -143,52 +128,32 @@ const Index = () => {
     if (hourlyData.length === 0) return undefined;
     return calculateForecastRange(hourlyData, timeWindow);
   }, [hourlyData, timeWindow]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="text-6xl mb-4">🌤️</div>
           <h2 className="text-2xl font-bold mb-2">Loading Weather Data</h2>
           <p className="text-white/80">Fetching data for {locationName}...</p>
         </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
+      </div>;
+  }
+  ;
+  return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">She's a Runner, She's a Track Star 🏃🏻‍♀️</h1>
-          <p className="text-white/80 text-lg">
-            Weather data for {locationName}
-            {weatherLoading && <span className="ml-2 text-yellow-300">• Updating...</span>}
-          </p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">🏃🏻‍♀️ RunTime</h1>
+          
         </div>
 
         <div className="grid gap-8 max-w-6xl mx-auto">
           {/* Best Time Section */}
           <div className="col-span-full">
-            <BestTimeCard 
-              hourlyData={hourlyData} 
-              locationName={locationName} 
-              currentWeather={currentWeather}
-              onLocationChange={handleLocationChange}
-              initialLocation={userLocation}
-              onTimeWindowChange={setTimeWindow}
-            />
+            <BestTimeCard hourlyData={hourlyData} locationName={locationName} currentWeather={currentWeather} onLocationChange={handleLocationChange} initialLocation={userLocation} onTimeWindowChange={setTimeWindow} />
           </div>
 
           {/* Weather Stats Grid */}
           <div className="grid md:grid-cols-2 gap-6">
-            {currentWeather && (
-              <WeatherCard 
-                title="Current Conditions" 
-                data={currentWeather} 
-                forecastRange={forecastRange}
-              />
-            )}
+            {currentWeather && <WeatherCard title="Current Conditions" data={currentWeather} forecastRange={forecastRange} />}
             
             {comparisonData && <ComparisonCard data={comparisonData} />}
           </div>
@@ -204,8 +169,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
