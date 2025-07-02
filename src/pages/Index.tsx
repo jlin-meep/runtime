@@ -6,7 +6,6 @@ import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeath
 import { calculateForecastRange } from '../utils/forecastUtils';
 import { SecureStorage, SecurityUtils } from '../utils/securityUtils';
 import Logger from '../utils/logger';
-
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
@@ -85,8 +84,9 @@ const Index = () => {
   };
   const loadWeatherData = async (isLocationChange = false) => {
     try {
-      Logger.info('Loading weather data', { location: locationName });
-
+      Logger.info('Loading weather data', {
+        location: locationName
+      });
       if (isLocationChange && !loading) {
         setWeatherLoading(true);
       }
@@ -95,17 +95,10 @@ const Index = () => {
       if (!SecurityUtils.validateCoordinates(userLocation)) {
         throw new Error('Invalid coordinates provided');
       }
-
       updateWeatherLocation(userLocation);
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       Logger.debug('Fetching weather data from APIs');
-      const [current, hourly, comparison] = await Promise.all([
-        getCurrentWeather(), 
-        getHourlyWeatherData(), 
-        getComparisonData()
-      ]);
-      
+      const [current, hourly, comparison] = await Promise.all([getCurrentWeather(), getHourlyWeatherData(), getComparisonData()]);
       Logger.success('Weather data loaded successfully');
       setCurrentWeather(current);
       setHourlyData(hourly);
@@ -160,7 +153,6 @@ const Index = () => {
         setLocationName(sanitizedName);
         await SecureStorage.setItem('runningAppLocationName', sanitizedName);
       }
-      
       Logger.success('Location updated successfully');
     } catch (error) {
       Logger.error('Failed to save location', error);
@@ -204,13 +196,10 @@ const Index = () => {
 
           {/* Footer */}
           <div className="text-center">
-            <p className="text-white text-base">
-              🌦️ Weather data from Open-Meteo API for coordinates. Built by Jennifer Lin.
-            </p>
+            <p className="text-white/65 text-xs">🌦️ Weather data from Open-Meteo API. Built by Jennifer Lin.</p>
           </div>
         </div>
       </div>
     </div>;
 };
-
 export default Index;
