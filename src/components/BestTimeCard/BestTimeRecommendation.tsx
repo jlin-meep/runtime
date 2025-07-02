@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { Sun, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
 import { WeatherData } from '../../utils/weatherTypes';
 import { useIsMobile } from '../../hooks/use-mobile';
-
 interface BestTimeRecommendationProps {
   bestTime: {
     time: string;
@@ -17,15 +15,12 @@ interface BestTimeRecommendationProps {
   };
   runDuration: number;
 }
-
 const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   bestTime,
   runDuration
 }) => {
   const isMobile = useIsMobile();
-
-  const contentInfo = (
-    <div className="space-y-3">
+  const contentInfo = <div className="space-y-3">
       <p className="text-sm font-medium text-gray-800">
         Wind conditions have the highest impact on your running score, followed by temperature comfort.
       </p>
@@ -35,23 +30,15 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
         <div>UV (20%)</div>
         <div>Clouds (10%)</div>
       </div>
-    </div>
-  );
-
-  return (
-    <div className="text-center py-4 md:py-6">
+    </div>;
+  return <div className="text-center py-4 md:py-6">
       <div className="text-4xl md:text-6xl font-bold text-white mb-2">
         {bestTime.isNow ? `Now (${bestTime.originalTime})` : bestTime.time}
       </div>
       <p className="text-white/90 text-base md:text-lg mb-2 px-2">
         {bestTime.contextualInsight || bestTime.reason}
       </p>
-      <p className="text-white/70 text-sm mb-4 px-2">
-        {bestTime.isNow ? 
-          `Perfect time to start your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run right now!` :
-          `Perfect start time for your ${runDuration === 0.5 ? '30-minute' : `${runDuration}-hour`} run`
-        }
-      </p>
+      
       
       <div className="flex flex-wrap justify-center gap-3 md:gap-6 text-sm mb-4 items-center">
         <div className="flex items-center space-x-1">
@@ -74,23 +61,11 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
               <Info className="w-4 h-4" />
             </button>
           </PopoverTrigger>
-          <PopoverContent 
-            className={`bg-white/95 backdrop-blur-sm border border-white/30 p-4 ${
-              isMobile 
-                ? 'w-[calc(100vw-4rem)] max-w-[280px]' 
-                : 'w-80'
-            }`}
-            align="end"
-            side="top"
-            sideOffset={8}
-            avoidCollisions={true}
-          >
+          <PopoverContent className={`bg-white/95 backdrop-blur-sm border border-white/30 p-4 ${isMobile ? 'w-[calc(100vw-4rem)] max-w-[280px]' : 'w-80'}`} align="end" side="top" sideOffset={8} avoidCollisions={true}>
             {contentInfo}
           </PopoverContent>
         </Popover>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default BestTimeRecommendation;
