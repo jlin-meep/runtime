@@ -31,6 +31,9 @@ export const setCurrentLocation = (coordinates: [number, number]) => {
   console.log('Open-Meteo service location updated to:', coordinates);
 };
 
+// Export alias for backward compatibility
+export const updateWeatherLocation = setCurrentLocation;
+
 export const fetchCurrentWeather = async (): Promise<OpenMeteoCurrentWeather | null> => {
   try {
     const [lon, lat] = currentLocation;

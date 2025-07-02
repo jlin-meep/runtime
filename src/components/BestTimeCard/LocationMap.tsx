@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { SecurityUtils } from '../../utils/securityUtils';
 import Logger from '../../utils/logger';
 
 interface LocationMapProps {

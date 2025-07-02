@@ -21,7 +21,7 @@ export const calculateBestTimeInWindow = (
     return current.score > best.score ? current : best;
   });
 
-  Logger.info('Best time in window:', bestTime.time, 'Score:', bestTime.score, 'Breakdown:', bestTime.scoreBreakdown);
+  Logger.info(`Best time in window: ${bestTime.time}, Score: ${bestTime.score}`);
   
   return bestTime;
 };

@@ -39,7 +39,7 @@ const LocationControls: React.FC<LocationControlsProps> = ({
       },
       (error) => {
         Logger.error('GPS location error', error);
-        onError(SecurityUtils.sanitizeErrorMessage(error));
+        onError(SecurityUtils.sanitizeErrorMessage(error.message));
         setLoading(false);
       }
     );
@@ -95,7 +95,7 @@ const LocationControls: React.FC<LocationControlsProps> = ({
       }
     } catch (error) {
       Logger.error('Address search error', error);
-      onError(SecurityUtils.sanitizeErrorMessage(error));
+      onError(SecurityUtils.sanitizeErrorMessage(error instanceof Error ? error.message : 'Search failed'));
     } finally {
       setLoading(false);
     }
