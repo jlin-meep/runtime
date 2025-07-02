@@ -1,4 +1,3 @@
-
 import { 
   fetchCurrentWeather, 
   fetchHourlyForecast, 
@@ -6,6 +5,8 @@ import {
 } from '../services/openMeteoService';
 import { WeatherData, TimeSlot, WeatherStation } from './weatherTypes';
 import { calculateDetailedScore } from './weatherScoring';
+import { SecurityUtils } from './securityUtils';
+import Logger from './logger';
 
 // Fallback data in case API fails
 const fallbackWeatherData: WeatherData = {
@@ -20,14 +21,19 @@ let currentLocationDebug: [number, number] = [-122.4364, 37.7751];
 
 // Add location update function
 export const updateWeatherLocation = (coordinates: [number, number]) => {
+  if (!SecurityUtils.validateCoordinates(coordinates)) {
+    Logger.error('Invalid coordinates provided to weather service');
+    return;
+  }
+  
   currentLocationDebug = coordinates;
   setCurrentLocation(coordinates);
-  console.log('🌍 Weather location updated to:', coordinates);
+  Logger.info('Weather location updated');
 };
 
 export const getCurrentWeather = async (): Promise<WeatherData> => {
   try {
-    console.log('🌤️ Fetching current weather for location:', currentLocationDebug);
+    Logger.info('Fetching current weather');
     const weatherData = await fetchCurrentWeather();
     
     if (weatherData?.current) {
@@ -40,14 +46,14 @@ export const getCurrentWeather = async (): Promise<WeatherData> => {
         uvIndex: Math.round(current.uv_index)
       };
       
-      console.log('✅ Current weather from Open-Meteo:', weather, 'for location:', currentLocationDebug);
+      Logger.success('Current weather data retrieved');
       return weather;
     }
     
-    console.warn('⚠️ No valid weather data found, using fallback');
+    Logger.warn('No valid weather data found, using fallback');
     return fallbackWeatherData;
   } catch (error) {
-    console.error('❌ Error fetching current weather:', error);
+    Logger.error('Error fetching current weather', error);
     return fallbackWeatherData;
   }
 };
@@ -65,20 +71,16 @@ export const getYesterdayWeather = (): WeatherData => {
 
 export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
   try {
-    console.log('📊 Fetching hourly forecast for location:', currentLocationDebug);
+    Logger.info('Fetching hourly forecast');
     const forecast = await fetchHourlyForecast();
     
     if (forecast?.hourly) {
       const hourly = forecast.hourly;
       const timeSlots: TimeSlot[] = [];
       
-      console.log('📈 Raw forecast data available for', hourly.time.length, 'hours');
+      Logger.debug('Processing forecast data');
       
-      // Process all available hours from the API (up to 48 hours)
-      // The API returns data starting from the current hour, not midnight
-      const maxHours = Math.min(48, hourly.time.length); // Use all available data
-      
-      console.log('🕐 Processing', maxHours, 'hours from API');
+      const maxHours = Math.min(48, hourly.time.length);
       
       for (let i = 0; i < maxHours; i++) {
         const time = new Date(hourly.time[i]);
@@ -88,19 +90,15 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         const cloudCoverage = Math.round(hourly.cloud_cover[i]);
         const uvIndex = Math.round(hourly.uv_index[i]);
         
-        // Skip very early morning hours (before 6 AM) unless it's the next day
         const now = new Date();
         const slotDate = time.toDateString();
         const todayDate = now.toDateString();
         const isToday = slotDate === todayDate;
         
-        // Only include hours from 6 AM onwards for today, but include all hours for future days
         if (isToday && hour < 6) {
-          console.log(`⏭️ Skipping early morning hour ${hour} for today`);
           continue;
         }
         
-        // Calculate detailed score breakdown
         const scoreBreakdown = calculateDetailedScore(temperature, windSpeed, cloudCoverage, uvIndex, hour);
         
         const slot = {
@@ -119,18 +117,16 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
         };
         
         timeSlots.push(slot);
-        
-        console.log(`⏰ Hour ${hour}: ${slot.time} - Score: ${slot.score} (Temp: ${temperature}°F, Wind: ${windSpeed}mph)`);
       }
       
-      console.log('✅ Hourly forecast processed:', timeSlots.length, 'slots for location:', currentLocationDebug);
-      console.log('🕐 Time range covered:', timeSlots[0]?.time, 'to', timeSlots[timeSlots.length - 1]?.time);
+      Logger.success('Hourly forecast processed');
       return timeSlots;
     }
   } catch (error) {
-    console.error('❌ Error fetching hourly weather data:', error);
+    Logger.error('Error fetching hourly weather data', error);
   }
   
+  Logger.warn('Using fallback hourly data');
   // Fallback to mock data if API fails - start from 6 AM and go through 10 PM
   console.log('⚠️ Using fallback hourly data (6 AM - 10 PM)');
   const fallbackData = [
@@ -153,7 +149,7 @@ export const getHourlyWeatherData = async (): Promise<TimeSlot[]> => {
     { time: "10:00 PM", hour: 22, score: 78, temperature: 56, windSpeed: 8, cloudCoverage: 15, uvIndex: 0 }
   ];
   
-  console.log('📋 Fallback data hours:', fallbackData.map(d => `${d.hour}:00 (${d.score})`));
+  Logger.debug('Fallback data hours:', fallbackData.map(d => `${d.hour}:00 (${d.score})`));
   return fallbackData;
 };
 
@@ -178,7 +174,7 @@ export const calculateBestTimeInWindow = (hourlyData: TimeSlot[], startHour: num
     return current.score > best.score ? current : best;
   });
 
-  console.log('🏆 Best time in window:', bestTime.time, 'Score:', bestTime.score, 'Breakdown:', bestTime.scoreBreakdown);
+  Logger.info('Best time in window:', bestTime.time, 'Score:', bestTime.score, 'Breakdown:', bestTime.scoreBreakdown);
   
   return bestTime;
 };
@@ -195,7 +191,7 @@ export const getBestRunningTime = (): { time: string; reason: string; conditions
 };
 
 export const getComparisonData = async () => {
-  console.log('📊 Getting comparison data for location:', currentLocationDebug);
+  Logger.info('Getting comparison data');
   const current = await getCurrentWeather();
   const previous = getYesterdayWeather();
   

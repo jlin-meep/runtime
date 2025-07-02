@@ -4,11 +4,15 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { SecurityUtils } from '../../utils/securityUtils';
+import Logger from '../../utils/logger';
+
 interface LocationSelectorProps {
   onLocationChange?: (coordinates: [number, number], address?: string) => void;
   initialLocation?: [number, number];
   onClose?: () => void;
 }
+
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   onLocationChange,
   initialLocation = [-122.4364, 37.7751],
@@ -18,6 +22,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<[number, number]>(initialLocation);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -35,16 +40,13 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   }, [initialLocation]);
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) {
-      console.log('❌ Missing requirements:', {
-        container: !!mapContainer.current,
-        token: !!mapboxToken
-      });
+      Logger.debug('Missing map requirements');
       return;
     }
-    console.log('🗺️ Initializing map with token:', mapboxToken.substring(0, 20) + '...');
 
-    // Set the access token
+    Logger.debug('Initializing map');
     mapboxgl.accessToken = mapboxToken;
+
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -53,7 +55,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         zoom: 14,
         attributionControl: false
       });
-      console.log('✅ Map instance created');
+
+      Logger.success('Map instance created');
 
       // Add initial marker
       marker.current = new mapboxgl.Marker({
@@ -62,7 +65,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       }).setLngLat(currentLocation).setPopup(new mapboxgl.Popup({
         offset: 25
       }).setHTML('<div><strong>🏃‍♂️ Your Running Location</strong><br/>Drag to adjust or use the controls below</div>')).addTo(map.current);
-      console.log('📍 Marker added');
+      Logger.success('📍 Marker added');
 
       // Handle marker drag
       marker.current.on('dragend', () => {
@@ -71,7 +74,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           const newCoords: [number, number] = [lngLat.lng, lngLat.lat];
           setCurrentLocation(newCoords);
           onLocationChange?.(newCoords);
-          console.log('📍 Location updated via drag:', newCoords);
+          Logger.success('📍 Location updated via drag:', newCoords);
         }
       });
 
@@ -81,7 +84,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         setCurrentLocation(newCoords);
         marker.current?.setLngLat(newCoords);
         onLocationChange?.(newCoords);
-        console.log('📍 Location updated via click:', newCoords);
+        Logger.success('📍 Location updated via click:', newCoords);
       });
 
       // Add navigation controls
@@ -89,77 +92,125 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       // Map events for debugging
       map.current.on('load', () => {
-        console.log('✅ Map loaded successfully');
+        Logger.success('Map loaded successfully');
         setMapError(null);
       });
-      map.current.on('error', e => {
-        console.error('❌ Map error:', e);
+      map.current.on('error', (e) => {
+        Logger.error('Map error occurred', e);
         setMapError('Map failed to load. Please check your internet connection.');
       });
     } catch (error) {
-      console.error('❌ Error initializing map:', error);
+      Logger.error('Error initializing map', error);
       setMapError('Failed to initialize map');
     }
+
     return () => {
-      console.log('🧹 Cleaning up map');
+      Logger.debug('Cleaning up map');
       map.current?.remove();
     };
   }, [mapboxToken, currentLocation]);
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
+      setMapError('Geolocation is not supported by this browser.');
       return;
     }
+
     setLoading(true);
-    navigator.geolocation.getCurrentPosition(position => {
-      const newCoords: [number, number] = [position.coords.longitude, position.coords.latitude];
-      setCurrentLocation(newCoords);
-      map.current?.flyTo({
-        center: newCoords,
-        zoom: 14
-      });
-      marker.current?.setLngLat(newCoords);
-      onLocationChange?.(newCoords);
-      setLoading(false);
-      console.log('📍 Location updated via GPS:', newCoords);
-    }, error => {
-      console.error('GPS location error:', error);
-      alert('Unable to retrieve your location. Please try entering an address instead.');
-      setLoading(false);
-    });
+    setInputError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newCoords: [number, number] = [position.coords.longitude, position.coords.latitude];
+        
+        if (!SecurityUtils.validateCoordinates(newCoords)) {
+          setInputError('Invalid location coordinates received.');
+          setLoading(false);
+          return;
+        }
+
+        setCurrentLocation(newCoords);
+        map.current?.flyTo({ center: newCoords, zoom: 14 });
+        marker.current?.setLngLat(newCoords);
+        onLocationChange?.(newCoords);
+        setLoading(false);
+        Logger.success('Location updated via GPS');
+      },
+      (error) => {
+        Logger.error('GPS location error', error);
+        setInputError(SecurityUtils.sanitizeErrorMessage(error));
+        setLoading(false);
+      }
+    );
   };
+
+  const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitizedInput = SecurityUtils.sanitizeAddressInput(e.target.value);
+    setAddressInput(sanitizedInput);
+    setInputError(null);
+
+    // Provide feedback for invalid input
+    if (e.target.value !== sanitizedInput) {
+      setInputError('Some characters were removed for security. Please use standard address format.');
+    }
+  };
+
   const searchAddress = async () => {
-    if (!addressInput.trim() || !mapboxToken) return;
+    const sanitizedInput = SecurityUtils.sanitizeAddressInput(addressInput.trim());
+    
+    if (!sanitizedInput || sanitizedInput.length < 2) {
+      setInputError('Please enter a valid address (at least 2 characters).');
+      return;
+    }
+
+    if (!mapboxToken) {
+      setInputError('Address search is currently unavailable.');
+      return;
+    }
+
     setLoading(true);
+    setInputError(null);
+
     try {
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressInput)}.json?access_token=${mapboxToken}&country=US&limit=1`);
-      if (!response.ok) throw new Error('Geocoding failed');
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(sanitizedInput)}.json?access_token=${mapboxToken}&country=US&limit=1`
+      );
+
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
       const data = await response.json();
+      
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center;
         const newCoords: [number, number] = [lng, lat];
-        const placeName = data.features[0].place_name;
+        
+        if (!SecurityUtils.validateCoordinates(newCoords)) {
+          throw new Error('Invalid coordinates received from search');
+        }
+
+        const placeName = SecurityUtils.sanitizeAddressInput(data.features[0].place_name);
+        
         setCurrentLocation(newCoords);
-        map.current?.flyTo({
-          center: newCoords,
-          zoom: 14
-        });
+        map.current?.flyTo({ center: newCoords, zoom: 14 });
         marker.current?.setLngLat(newCoords);
         onLocationChange?.(newCoords, placeName);
-        setAddressInput(''); // Clear the input after successful search
+        setAddressInput('');
 
-        console.log('📍 Location updated via search:', newCoords, placeName);
+        Logger.success('Location updated via search');
       } else {
-        alert('Address not found. Please try a different search term.');
+        setInputError('Address not found. Please try a different search term.');
       }
     } catch (error) {
-      console.error('Address search error:', error);
-      alert('Error searching for address. Please try again.');
+      Logger.error('Address search error', error);
+      setInputError(SecurityUtils.sanitizeErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
-  return <div className="bg-white/10 rounded-2xl p-4 border border-white/20 relative">
+
+  return (
+    <div className="bg-white/10 rounded-2xl p-4 border border-white/20 relative">
       {/* Close button */}
       {onClose && <button onClick={onClose} className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-lg transition-colors z-10">
           <X className="w-4 h-4 text-white" />
@@ -170,20 +221,38 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         Set Your Running Location
       </h3>
       
-      {mapError && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-          <p className="text-white text-sm">⚠️ {mapError}</p>
-        </div>}
+      {(mapError || inputError) && (
+        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+          <p className="text-white text-sm">⚠️ {mapError || inputError}</p>
+        </div>
+      )}
       
       {/* Location Controls */}
       <div className="space-y-3 mb-4">
         <div className="flex gap-2">
-          <Input type="text" placeholder="Enter address or zip code..." value={addressInput} onChange={e => setAddressInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchAddress()} className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/70" />
-          <Button onClick={searchAddress} disabled={loading || !addressInput.trim()} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+          <Input
+            type="text"
+            placeholder="Enter address or zip code..."
+            value={addressInput}
+            onChange={handleAddressInputChange}
+            onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
+            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/70"
+            maxLength={200}
+          />
+          <Button
+            onClick={searchAddress}
+            disabled={loading || !addressInput.trim()}
+            className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+          >
             <Search className="w-4 h-4" />
           </Button>
         </div>
         
-        <Button onClick={getCurrentLocation} disabled={loading} className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30">
+        <Button
+          onClick={getCurrentLocation}
+          disabled={loading}
+          className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
+        >
           <Navigation className="w-4 h-4 mr-2" />
           {loading ? 'Getting location...' : 'Use Current Location'}
         </Button>
@@ -202,6 +271,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           Weather data will be sourced from the nearest available station
         </p>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default LocationSelector;

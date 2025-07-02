@@ -4,6 +4,8 @@ import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
 import { calculateForecastRange } from '../utils/forecastUtils';
+import { SecureStorage, SecurityUtils } from '../utils/securityUtils';
+import Logger from '../utils/logger';
 
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -12,18 +14,44 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(false);
 
-  // Load initial location from localStorage or default to NOPA
-  const getInitialLocation = (): [number, number] => {
-    const saved = localStorage.getItem('runningAppLocation');
-    return saved ? JSON.parse(saved) : [-122.4364, 37.7751];
+  // Load initial location securely from encrypted storage
+  const getInitialLocation = async (): Promise<[number, number]> => {
+    try {
+      const saved = await SecureStorage.getItem('runningAppLocation');
+      if (saved) {
+        const coordinates = JSON.parse(saved) as [number, number];
+        if (SecurityUtils.validateCoordinates(coordinates)) {
+          return coordinates;
+        }
+      }
+    } catch (error) {
+      Logger.warn('Failed to load saved location, using default');
+    }
+    return [-122.4364, 37.7751]; // Default to NOPA
   };
-  const getInitialLocationName = (): string => {
-    const savedName = localStorage.getItem('runningAppLocationName');
-    return savedName || 'NOPA, San Francisco';
+  const getInitialLocationName = async (): Promise<string> => {
+    try {
+      const savedName = await SecureStorage.getItem('runningAppLocationName');
+      return savedName || 'NOPA, San Francisco';
+    } catch (error) {
+      Logger.warn('Failed to load saved location name, using default');
+      return 'NOPA, San Francisco';
+    }
   };
-  const [userLocation, setUserLocation] = useState<[number, number]>(getInitialLocation());
-  const [locationName, setLocationName] = useState(getInitialLocationName());
-  const [timeWindow, setTimeWindow] = useState([9, 20]); // Track time window state
+  const [userLocation, setUserLocation] = useState<[number, number]>([-122.4364, 37.7751]);
+  const [locationName, setLocationName] = useState('NOPA, San Francisco');
+  const [timeWindow, setTimeWindow] = useState([9, 20]);
+
+  // Initialize location data securely
+  useEffect(() => {
+    const initializeLocation = async () => {
+      const location = await getInitialLocation();
+      const name = await getInitialLocationName();
+      setUserLocation(location);
+      setLocationName(name);
+    };
+    initializeLocation();
+  }, []);
 
   // Use your valid Mapbox token for reverse geocoding
   const mapboxToken = 'pk.eyJ1IjoiamVubmlmZXIybGluIiwiYSI6ImNtY2p1N2FvbzA3d2gybnE0enk3YXQ3eWkifQ.yyfPBUCT2nP7ZRbHGVowBg';
@@ -57,31 +85,34 @@ const Index = () => {
   };
   const loadWeatherData = async (isLocationChange = false) => {
     try {
-      console.log('🌤️ Loading weather data for location:', locationName, userLocation);
+      Logger.info('Loading weather data', { location: locationName });
 
-      // Only show weather loading for location changes after initial load
       if (isLocationChange && !loading) {
         setWeatherLoading(true);
       }
 
-      // CRITICAL: Update weather service location FIRST before any API calls
-      updateWeatherLocation(userLocation);
+      // Validate coordinates before API calls
+      if (!SecurityUtils.validateCoordinates(userLocation)) {
+        throw new Error('Invalid coordinates provided');
+      }
 
-      // Add a small delay to ensure location is set properly
+      updateWeatherLocation(userLocation);
       await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('📊 Fetching weather data from APIs...');
-      const [current, hourly, comparison] = await Promise.all([getCurrentWeather(), getHourlyWeatherData(), getComparisonData()]);
-      console.log('✅ Weather data loaded:', {
-        current: current,
-        hourlySlots: hourly.length,
-        comparison: comparison,
-        location: userLocation
-      });
+      
+      Logger.debug('Fetching weather data from APIs');
+      const [current, hourly, comparison] = await Promise.all([
+        getCurrentWeather(), 
+        getHourlyWeatherData(), 
+        getComparisonData()
+      ]);
+      
+      Logger.success('Weather data loaded successfully');
       setCurrentWeather(current);
       setHourlyData(hourly);
       setComparisonData(comparison);
     } catch (error) {
-      console.error('❌ Error loading weather data:', error);
+      Logger.error('Error loading weather data', error);
+      // Show user-friendly error message (implement toast notification here if needed)
     } finally {
       setLoading(false);
       setWeatherLoading(false);
@@ -103,25 +134,37 @@ const Index = () => {
     }
   }, [userLocation]);
   const handleLocationChange = async (coordinates: [number, number], address?: string) => {
-    console.log('🎯 Location change requested:', coordinates, address);
+    Logger.info('Location change requested');
 
-    // Save location to localStorage
-    localStorage.setItem('runningAppLocation', JSON.stringify(coordinates));
-    setUserLocation(coordinates);
-
-    // Update location name
-    if (address) {
-      console.log('📍 Using provided address:', address);
-      setLocationName(address);
-      localStorage.setItem('runningAppLocationName', address);
-    } else {
-      // Use reverse geocoding to get location name
-      console.log('🔍 Reverse geocoding new location...');
-      const geocodedName = await reverseGeocode(coordinates);
-      setLocationName(geocodedName);
-      localStorage.setItem('runningAppLocationName', geocodedName);
+    // Validate coordinates before processing
+    if (!SecurityUtils.validateCoordinates(coordinates)) {
+      Logger.error('Invalid coordinates provided');
+      return;
     }
-    console.log('✅ Location updated:', coordinates, address || (await reverseGeocode(coordinates)));
+
+    // Save location securely
+    try {
+      await SecureStorage.setItem('runningAppLocation', JSON.stringify(coordinates));
+      setUserLocation(coordinates);
+
+      // Update location name
+      if (address) {
+        const sanitizedAddress = SecurityUtils.sanitizeAddressInput(address);
+        Logger.info('Using provided address');
+        setLocationName(sanitizedAddress);
+        await SecureStorage.setItem('runningAppLocationName', sanitizedAddress);
+      } else {
+        Logger.debug('Reverse geocoding new location');
+        const geocodedName = await reverseGeocode(coordinates);
+        const sanitizedName = SecurityUtils.sanitizeAddressInput(geocodedName);
+        setLocationName(sanitizedName);
+        await SecureStorage.setItem('runningAppLocationName', sanitizedName);
+      }
+      
+      Logger.success('Location updated successfully');
+    } catch (error) {
+      Logger.error('Failed to save location', error);
+    }
   };
 
   // Calculate forecast range for the current time window
