@@ -4,6 +4,7 @@ import WeatherCard from '../components/WeatherCard';
 import ComparisonCard from '../components/ComparisonCard';
 import { getCurrentWeather, getHourlyWeatherData, getComparisonData, updateWeatherLocation } from '../utils/weatherService';
 import { calculateForecastRange } from '../utils/forecastUtils';
+
 const Index = () => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
@@ -158,17 +159,15 @@ const Index = () => {
             {comparisonData && <ComparisonCard data={comparisonData} />}
           </div>
 
-          {/* Debug Info */}
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 text-center">
-            <p className="text-white/90 text-sm mb-2">
-              🌦️ Weather data from Open-Meteo API for coordinates: [{userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}]
-            </p>
-            <p className="text-white/70 text-xs">
-              Recommendations based on current conditions and hourly forecasts for {locationName}
+          {/* Footer */}
+          <div className="text-center">
+            <p className="text-white text-base">
+              🌦️ Weather data from Open-Meteo API for coordinates. Built by Jennifer Lin.
             </p>
           </div>
         </div>
       </div>
     </div>;
 };
+
 export default Index;
