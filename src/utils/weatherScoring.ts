@@ -15,14 +15,18 @@ export const calculateDetailedScore = (
   uvIndex: number, 
   hour: number
 ): ScoreBreakdown => {
-  // Wind scoring - 40% weight (40 points max) - heavily penalize winds over 15mph
+  // Wind scoring - 40% weight (40 points max) - heavily favor low winds
   let windScore;
-  if (windSpeed <= 10) {
-    windScore = 40; // Perfect conditions
+  if (windSpeed <= 8) {
+    windScore = 40; // Perfect conditions - very low wind
+  } else if (windSpeed <= 12) {
+    windScore = 35 - ((windSpeed - 8) * 2); // Good conditions - slight penalty
   } else if (windSpeed <= 15) {
-    windScore = Math.max(0, (15 - windSpeed) / 5) * 30; // Good conditions
+    windScore = 27 - ((windSpeed - 12) * 3); // Moderate conditions - bigger penalty
+  } else if (windSpeed <= 20) {
+    windScore = 18 - ((windSpeed - 15) * 2); // Poor conditions - major penalty
   } else {
-    windScore = Math.max(0, (25 - windSpeed) / 10) * 15; // Poor conditions
+    windScore = Math.max(0, 8 - ((windSpeed - 20) * 1)); // Very poor conditions
   }
   
   // Temperature scoring - 30% weight (30 points max) - ideal range is 60-75°F

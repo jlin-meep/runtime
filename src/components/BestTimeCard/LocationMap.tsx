@@ -83,11 +83,11 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
       map.current.on('error', (e) => {
         Logger.error('Map error occurred', e);
-        onError('Map failed to load. Please check your internet connection.');
+        onError(SecurityUtils.sanitizeErrorMessage('Map failed to load. Please check your internet connection.'));
       });
     } catch (error) {
       Logger.error('Error initializing map', error);
-      onError('Failed to initialize map');
+      onError(SecurityUtils.sanitizeErrorMessage('Failed to initialize map'));
     }
 
     return () => {
