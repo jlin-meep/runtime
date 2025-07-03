@@ -16,10 +16,32 @@ export const calculateForecastRange = (
   hourlyData: TimeSlot[], 
   timeWindow: number[]
 ): ForecastRange => {
+  console.log('📊 calculateForecastRange called with:', {
+    totalSlots: hourlyData.length,
+    timeWindow,
+    sampleSlots: hourlyData.slice(0, 3).map(slot => ({
+      time: slot.time,
+      hour: slot.hour,
+      windSpeed: slot.windSpeed,
+      temperature: slot.temperature
+    }))
+  });
+
   // Filter data to only include times within the selected window
   const filteredData = hourlyData.filter(slot => 
     slot.hour >= timeWindow[0] && slot.hour <= timeWindow[1]
   );
+
+  console.log('🎯 Filtered data for range calculation:', {
+    filteredCount: filteredData.length,
+    timeWindow,
+    filteredSlots: filteredData.map(slot => ({
+      time: slot.time,
+      hour: slot.hour,
+      windSpeed: slot.windSpeed,
+      temperature: slot.temperature
+    }))
+  });
 
   if (filteredData.length === 0) {
     // Return neutral values if no data available

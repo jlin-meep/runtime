@@ -14,6 +14,16 @@ export const getHourlyForecast = async (): Promise<TimeSlot[]> => {
       const timeSlots: TimeSlot[] = [];
       
       Logger.debug('Processing forecast data');
+      console.log('🌤️ Raw API data sample:', {
+        totalHours: hourly.time.length,
+        sampleData: hourly.time.slice(0, 5).map((time, i) => ({
+          time,
+          temp: hourly.temperature_2m[i],
+          wind: hourly.wind_speed_10m[i],
+          clouds: hourly.cloud_cover[i],
+          uv: hourly.uv_index[i]
+        }))
+      });
       
       const maxHours = Math.min(48, hourly.time.length);
       
