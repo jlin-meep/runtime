@@ -29,16 +29,12 @@ export const useBestTimeLogic = ({
         time: formatTimeWithMinutes(slot.hour, 0)
       });
       
-      // Add the half-hour slot (XX:30) with slightly varied conditions
+      // Add the half-hour slot (XX:30) with identical conditions to maintain wind priority
       slots.push({
         ...slot,
         minute: 30,
-        time: formatTimeWithMinutes(slot.hour, 30),
-        // Slightly vary the score for half-hour slots
-        score: slot.score + (Math.random() - 0.5) * 0.1,
-        temperature: slot.temperature + (Math.random() - 0.5) * 2,
-        windSpeed: Math.max(0, slot.windSpeed + (Math.random() - 0.5) * 1),
-        cloudCoverage: Math.max(0, Math.min(100, slot.cloudCoverage + (Math.random() - 0.5) * 10))
+        time: formatTimeWithMinutes(slot.hour, 30)
+        // Keep identical weather conditions to preserve wind speed priority
       });
     });
     
