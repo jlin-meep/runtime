@@ -16,32 +16,47 @@ export const useBestTimeLogic = ({
   runDuration, 
   currentWeather 
 }: UseBestTimeLogicProps) => {
-  // Generate half-hour time slots from hourly data
+  // Generate half-hour time slots only when needed
   const halfHourlyData = useMemo(() => {
-    console.log('🕐 Generating half-hourly data from hourly data:', hourlyData.length, 'slots');
+    console.log('🕐 Generating time slots from hourly data:', hourlyData.length, 'slots');
     const slots: TimeSlot[] = [];
     
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
     hourlyData.forEach(slot => {
-      // Add the hour slot (XX:00)
+      // Always add the hour slot (XX:00)
       slots.push({
         ...slot,
         minute: 0,
         time: formatTimeWithMinutes(slot.hour, 0)
       });
       
-      // Add the half-hour slot (XX:30) with identical conditions to maintain wind priority
-      slots.push({
-        ...slot,
-        minute: 30,
-        time: formatTimeWithMinutes(slot.hour, 30)
-        // Keep identical weather conditions to preserve wind speed priority
-      });
+      // Only add half-hour slot if:
+      // 1. We're currently within this hour, OR
+      // 2. This is needed to fulfill a 30-minute run duration before window ends
+      const isCurrentHour = slot.hour === currentHour;
+      const isLastPossibleSlot = slot.hour === timeWindow[1] - 1 && runDuration === 0.5;
+      
+      if (isCurrentHour || isLastPossibleSlot) {
+        slots.push({
+          ...slot,
+          minute: 30,
+          time: formatTimeWithMinutes(slot.hour, 30)
+        });
+      }
     });
     
     const sortedSlots = slots.sort((a, b) => a.hour === b.hour ? (a.minute || 0) - (b.minute || 0) : a.hour - b.hour);
-    console.log('✅ Generated', sortedSlots.length, 'half-hourly slots:', sortedSlots.map(s => `${s.time} (score: ${s.score.toFixed(1)})`));
+    
+    // Log detailed scoring for debugging
+    sortedSlots.forEach(slot => {
+      console.log(`📊 ${slot.time}: Score ${slot.score} | Wind: ${slot.windSpeed}mph | Temp: ${slot.temperature}°F | Breakdown:`, slot.scoreBreakdown);
+    });
+    
     return sortedSlots;
-  }, [hourlyData]);
+  }, [hourlyData, timeWindow, runDuration]);
 
   const bestTimeInWindow = useMemo(() => {
     const now = new Date();
