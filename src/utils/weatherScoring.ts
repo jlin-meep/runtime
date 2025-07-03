@@ -15,46 +15,47 @@ export const calculateDetailedScore = (
   uvIndex: number, 
   hour: number
 ): ScoreBreakdown => {
-  // Wind scoring - 40% weight (40 points max) - heavily favor low winds
+  // Wind scoring - 60% weight (60 points max) - heavily prioritize low winds with severe penalty over 15mph
   let windScore;
-  if (windSpeed <= 8) {
-    windScore = 40; // Perfect conditions - very low wind
+  if (windSpeed > 15) {
+    // Severe penalty for winds over 15 mph - maximum 15 points to ensure they never win
+    windScore = Math.max(0, 15 - ((windSpeed - 15) * 2));
+  } else if (windSpeed <= 8) {
+    windScore = 60; // Perfect conditions - very low wind
   } else if (windSpeed <= 12) {
-    windScore = 35 - ((windSpeed - 8) * 2); // Good conditions - slight penalty
-  } else if (windSpeed <= 15) {
-    windScore = 27 - ((windSpeed - 12) * 3); // Moderate conditions - bigger penalty
-  } else if (windSpeed <= 20) {
-    windScore = 18 - ((windSpeed - 15) * 2); // Poor conditions - major penalty
+    windScore = 55 - ((windSpeed - 8) * 2); // Good conditions - slight penalty
   } else {
-    windScore = Math.max(0, 8 - ((windSpeed - 20) * 1)); // Very poor conditions
+    windScore = 47 - ((windSpeed - 12) * 4); // Moderate conditions - bigger penalty
   }
   
-  // Temperature scoring - 30% weight (30 points max) - ideal range is 60-75°F
+  // Temperature scoring - 25% weight (25 points max) - ideal range is 65-70°F
   let tempScore;
-  if (temperature >= 60 && temperature <= 75) {
-    tempScore = 30; // Perfect temperature range
+  if (temperature >= 65 && temperature <= 70) {
+    tempScore = 25; // Perfect temperature range
+  } else if (temperature >= 60 && temperature <= 75) {
+    tempScore = 20; // Good temperature range
   } else {
-    tempScore = Math.max(0, (100 - Math.abs(temperature - 67.5)) / 100) * 30;
+    tempScore = Math.max(0, (100 - Math.abs(temperature - 67.5)) / 100) * 25;
   }
   
-  // UV scoring - 20% weight (20 points max) - favor moderate UV levels (2-5), penalize very low and very high
+  // UV scoring - 10% weight (10 points max) - favor moderate UV levels
   let uvScore;
   if (uvIndex >= 2 && uvIndex <= 5) {
-    uvScore = 20; // Ideal UV range
+    uvScore = 10; // Ideal UV range
   } else if (uvIndex < 2) {
-    uvScore = 13; // Low UV (early/late)
+    uvScore = 7; // Low UV (early/late)
   } else if (uvIndex <= 7) {
-    uvScore = Math.max(0, (8 - uvIndex) / 3) * 10; // Manageable UV
+    uvScore = Math.max(0, (8 - uvIndex) / 3) * 5; // Manageable UV
   } else {
-    uvScore = 3; // Dangerous UV
+    uvScore = 2; // Dangerous UV
   }
   
-  // Cloud coverage scoring - 10% weight (10 points max) - prefer some clouds for comfort
+  // Cloud coverage scoring - 5% weight (5 points max) - prefer some clouds for comfort
   let cloudScore;
   if (cloudCoverage >= 20 && cloudCoverage <= 60) {
-    cloudScore = 10; // Some cloud cover is good
+    cloudScore = 5; // Some cloud cover is good
   } else {
-    cloudScore = Math.max(0, (100 - Math.abs(cloudCoverage - 40)) / 100) * 10;
+    cloudScore = Math.max(0, (100 - Math.abs(cloudCoverage - 40)) / 100) * 5;
   }
   
   // Small bonus for running sooner when conditions are good
