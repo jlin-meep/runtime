@@ -133,7 +133,7 @@ export const useBestTimeLogic = ({
       
       // Compare suggested time vs current conditions
       if (!currentWeather) {
-        return `Optimal conditions with ${Math.round(slot.windSpeed)} mph winds`;
+        return `Best available with ${Math.round(slot.windSpeed)} mph winds`;
       }
       
       const tempDiff = slot.temperature - currentWeather.temperature;
@@ -141,43 +141,46 @@ export const useBestTimeLogic = ({
       const uvDiff = slot.uvIndex - currentWeather.uvIndex;
       const cloudDiff = slot.cloudCoverage - currentWeather.cloudCoverage;
       
-      // Determine the most significant improvement
-      const improvements: string[] = [];
+      // Determine the most significant changes
+      const positiveChanges: string[] = [];
+      const negativeChanges: string[] = [];
       
       // Wind is the most important factor (40% weight) - lower is always better
       if (windDiff < -2) {
-        improvements.push(`winds will calm from ${Math.round(currentWeather.windSpeed)} to ${Math.round(slot.windSpeed)} mph`);
+        positiveChanges.push(`winds will calm from ${Math.round(currentWeather.windSpeed)} to ${Math.round(slot.windSpeed)} mph`);
       } else if (windDiff > 2) {
-        improvements.push(`windier conditions (${Math.round(slot.windSpeed)} mph vs current ${Math.round(currentWeather.windSpeed)} mph)`);
+        negativeChanges.push(`windier conditions (${Math.round(slot.windSpeed)} mph vs current ${Math.round(currentWeather.windSpeed)} mph)`);
       }
       
       // Temperature comfort (30% weight)
       if (tempDiff < -5) {
-        improvements.push(`cooler ${Math.round(slot.temperature)}°F (down from ${Math.round(currentWeather.temperature)}°F)`);
+        positiveChanges.push(`cooler ${Math.round(slot.temperature)}°F (down from ${Math.round(currentWeather.temperature)}°F)`);
       } else if (tempDiff > 5) {
-        improvements.push(`warmer ${Math.round(slot.temperature)}°F (up from ${Math.round(currentWeather.temperature)}°F)`);
+        positiveChanges.push(`warmer ${Math.round(slot.temperature)}°F (up from ${Math.round(currentWeather.temperature)}°F)`);
       }
       
       // UV considerations (20% weight)
       if (uvDiff < -2) {
-        improvements.push(`lower UV index (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
+        positiveChanges.push(`lower UV index (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
       } else if (uvDiff > 2) {
-        improvements.push(`higher UV protection needed (UV ${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
+        negativeChanges.push(`higher UV (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
       }
       
       // Cloud coverage (10% weight) - less important but still relevant
       if (cloudDiff > 20) {
-        improvements.push("more cloud cover for shade");
+        positiveChanges.push("more cloud cover for shade");
       } else if (cloudDiff < -20) {
-        improvements.push("clearer skies");
+        positiveChanges.push("clearer skies");
       }
       
-      if (improvements.length === 0) {
-        return `Optimal conditions with ${Math.round(slot.windSpeed)} mph winds`;
+      // Prioritize positive changes, but acknowledge negative ones
+      if (positiveChanges.length > 0) {
+        return `Better conditions: ${positiveChanges[0]}`;
+      } else if (negativeChanges.length > 0) {
+        return `Best available option: ${negativeChanges[0]}`;
+      } else {
+        return `Similar conditions with ${Math.round(slot.windSpeed)} mph winds`;
       }
-      
-      // Return the most important improvement
-      return `Better conditions: ${improvements[0]}`;
     };
 
     // Check if the suggested time is "now" (within 30 minutes of current time)
