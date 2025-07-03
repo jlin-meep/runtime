@@ -144,11 +144,11 @@ export const useBestTimeLogic = ({
       // Determine the most significant improvement
       const improvements: string[] = [];
       
-      // Wind is the most important factor (40% weight)
-      if (windDiff < -3) {
+      // Wind is the most important factor (40% weight) - lower is always better
+      if (windDiff < -2) {
         improvements.push(`winds will calm from ${Math.round(currentWeather.windSpeed)} to ${Math.round(slot.windSpeed)} mph`);
-      } else if (windDiff > 3) {
-        improvements.push(`winds will increase to ${Math.round(slot.windSpeed)} mph`);
+      } else if (windDiff > 2) {
+        improvements.push(`windier conditions (${Math.round(slot.windSpeed)} mph vs current ${Math.round(currentWeather.windSpeed)} mph)`);
       }
       
       // Temperature comfort (30% weight)

@@ -61,7 +61,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
           const lngLat = marker.current.getLngLat();
           const newCoords: [number, number] = [lngLat.lng, lngLat.lat];
           onLocationUpdate(newCoords);
-          Logger.success('📍 Location updated via drag:', newCoords);
+          Logger.success(`📍 Location updated via drag: ${newCoords}`);
         }
       });
 
@@ -70,7 +70,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
         const newCoords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
         marker.current?.setLngLat(newCoords);
         onLocationUpdate(newCoords);
-        Logger.success('📍 Location updated via click:', newCoords);
+        Logger.success(`📍 Location updated via click: ${newCoords}`);
       });
 
       // Add navigation controls
@@ -83,11 +83,11 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
       map.current.on('error', (e) => {
         Logger.error('Map error occurred', e);
-        onError(SecurityUtils.sanitizeErrorMessage('Map failed to load. Please check your internet connection.'));
+        onError(SecurityUtils.sanitizeErrorMessage(e));
       });
     } catch (error) {
       Logger.error('Error initializing map', error);
-      onError(SecurityUtils.sanitizeErrorMessage('Failed to initialize map'));
+      onError(SecurityUtils.sanitizeErrorMessage(error));
     }
 
     return () => {
