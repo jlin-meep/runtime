@@ -165,7 +165,7 @@ const Index = () => {
     return calculateForecastRange(hourlyData, timeWindow);
   }, [hourlyData, timeWindow]);
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-sky-300 via-blue-200 to-orange-200 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="text-6xl mb-4">🌤️</div>
           <h2 className="text-2xl font-bold mb-2">Loading Weather Data</h2>
@@ -174,7 +174,7 @@ const Index = () => {
       </div>;
   }
   ;
-  return <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-500 to-blue-600">
+  return <div className="min-h-screen bg-gradient-to-br from-sky-300 via-blue-200 to-orange-200">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">🏃🏻‍♀️ RunTime</h1>
