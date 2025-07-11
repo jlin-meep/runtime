@@ -46,7 +46,7 @@ const BestTimeCard: React.FC<BestTimeCardProps> = ({
   const forecastRange = calculateForecastRange(hourlyData, timeWindow);
 
   return (
-    <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/30 shadow-2xl">
+    <div className="bg-black/30 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-white/20 shadow-2xl">
       {/* Header Section with Collapsible Location Selector */}
       <div className="flex flex-col space-y-4 mb-6">
         <BestTimeHeader 
