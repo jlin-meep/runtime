@@ -55,7 +55,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
       
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-black/20 rounded-lg">
+          <div className="p-2 bg-white/20 rounded-lg">
             <Sun className="w-6 h-6 text-yellow-300" />
           </div>
           <div>
@@ -66,7 +66,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-black/20 rounded-lg">
+          <div className="p-2 bg-white/20 rounded-lg">
             <Wind className="w-6 h-6 text-blue-300" />
           </div>
           <div>
@@ -77,7 +77,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-black/20 rounded-lg">
+          <div className="p-2 bg-white/20 rounded-lg">
             <Cloud className="w-6 h-6 text-gray-300" />
           </div>
           <div>
@@ -88,7 +88,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-black/20 rounded-lg">
+          <div className="p-2 bg-white/20 rounded-lg">
             <Sun className="w-6 h-6 text-orange-300" />
           </div>
           <div>

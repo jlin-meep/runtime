@@ -138,7 +138,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
         {renderComparison(data.uvIndex.current, data.uvIndex.previous, "", "UV Index")}
       </div>
       
-      <div className="mt-4 p-3 bg-black/20 rounded-lg">
+      <div className="mt-4 p-3 bg-white/20 rounded-lg">
         <p className="text-white/80 text-sm text-center">
           {getTimeAwareAdvice()}
         </p>
