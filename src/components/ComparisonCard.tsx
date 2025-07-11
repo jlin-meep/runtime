@@ -128,7 +128,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
       </div>;
   };
 
-  return <div className="bg-black/30 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
+  return <div className="bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Today vs Yesterday At {getCurrentPacificTime()}</h3>
       
       <div className="space-y-3">

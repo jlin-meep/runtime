@@ -50,7 +50,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ title, data, forecastRange, c
   };
 
   return (
-    <div className={`bg-black/30 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`}>
+    <div className={`bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 ${className}`}>
       <h3 className="text-xl font-semibold text-white mb-4">{title}</h3>
       
       <div className="grid grid-cols-2 gap-4">
