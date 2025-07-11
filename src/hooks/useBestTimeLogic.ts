@@ -139,16 +139,16 @@ export const useBestTimeLogic = ({
       const isNow = Math.abs(bestTimeTotalMinutes - currentTotalMinutes) <= 30;
       
       if (isNow) {
-        // Check if conditions are actually perfect (wind <= 10 mph AND temp >= 60°F)
+        // Check if conditions are actually perfect (wind <= 10 mph AND temp >= 62°F)
         const isWindy = slot.windSpeed > 10;
-        const isChilly = slot.temperature < 60;
+        const isChilly = slot.temperature < 62;
         
         if (isWindy && isChilly) {
-          return "A bit windy and chilly, but the best conditions available today";
+          return "It's a bit windy and chilly, but the best conditions available today";
         } else if (isWindy) {
-          return "Pretty windy today, but now it's the least windy time to go";
+          return "It's pretty windy today, but now it's the least windy time to go";
         } else if (isChilly) {
-          return "A little chilly, but the warmest time with lowest winds today";
+          return "It's a little chilly, but the warmest time with lowest winds today";
         } else {
           return "Perfect conditions right now - go for it!";
         }
