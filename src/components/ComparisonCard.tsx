@@ -131,7 +131,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
   return <div className="bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg">
       <h3 className="text-xl font-semibold text-white mb-4">Today vs Yesterday At {getCurrentPacificTime()}</h3>
       
-      <div className="space-y-3">
+      <div className="bg-white/20 space-y-3">
         {renderComparison(data.temperature.current, data.temperature.previous, "°F", "Temperature")}
         {renderComparison(data.windSpeed.current, data.windSpeed.previous, " mph", "Wind Speed")}
         {renderComparison(data.cloudCoverage.current, data.cloudCoverage.previous, "%", "Cloud Coverage")}
