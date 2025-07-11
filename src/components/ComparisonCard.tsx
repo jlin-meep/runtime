@@ -120,7 +120,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
         <span className="text-white/90 text-sm">{label}</span>
         <div className="flex items-center space-x-2">
           <span className="text-white font-semibold">{current}{unit}</span>
-          {diff !== 0 && <div className={`flex items-center space-x-1 ${isIncrease ? 'text-red-600' : 'text-green-700'}`}>
+          {diff !== 0 && <div className={`flex items-center space-x-1 ${isIncrease ? 'text-red-600' : 'text-green-500'}`}>
               {isIncrease ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
               <span className="text-xs">{absValue.toFixed(1)}{unit}</span>
             </div>}
