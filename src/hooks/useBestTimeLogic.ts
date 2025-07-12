@@ -175,11 +175,24 @@ export const useBestTimeLogic = ({
         negativeChanges.push(`windier conditions (${Math.round(slot.windSpeed)} mph vs current ${Math.round(currentWeather.windSpeed)} mph)`);
       }
       
-      // Temperature comfort (30% weight)
-      if (tempDiff < -5) {
-        positiveChanges.push(`cooler ${Math.round(slot.temperature)}°F (down from ${Math.round(currentWeather.temperature)}°F)`);
-      } else if (tempDiff > 5) {
-        positiveChanges.push(`warmer ${Math.round(slot.temperature)}°F (up from ${Math.round(currentWeather.temperature)}°F)`);
+      // Temperature comfort (30% weight) - prefer temperatures closer to ideal 65-70°F
+      const currentTempScore = Math.abs(currentWeather.temperature - 67.5);
+      const futureTempScore = Math.abs(slot.temperature - 67.5);
+      
+      if (futureTempScore < currentTempScore - 3) {
+        // Future temperature is significantly closer to ideal
+        if (slot.temperature > currentWeather.temperature) {
+          positiveChanges.push(`warmer ${Math.round(slot.temperature)}°F (closer to ideal)`);
+        } else {
+          positiveChanges.push(`cooler ${Math.round(slot.temperature)}°F (closer to ideal)`);
+        }
+      } else if (currentTempScore < futureTempScore - 3) {
+        // Current temperature is significantly better
+        if (slot.temperature < currentWeather.temperature) {
+          negativeChanges.push(`cooler ${Math.round(slot.temperature)}°F (further from ideal)`);
+        } else {
+          negativeChanges.push(`warmer ${Math.round(slot.temperature)}°F (further from ideal)`);
+        }
       }
       
       // UV considerations (20% weight)
