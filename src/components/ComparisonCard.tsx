@@ -62,7 +62,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
     // Mid-morning (9 AM - 12 PM): Still good for running
     else if (pacificHour >= 9 && pacificHour < 12) {
       if (tempDiff > 5) {
-        return "☀️ Getting warmer - next time try a 7 AM start";
+        return "☀️ Getting warmer - earlier in your window may be better";
       } else if (windDiff > 3) {
         return "💨 Windier than yesterday - consider sheltered routes";
       } else if (cloudDiff < -20) {
@@ -75,13 +75,13 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
     // Afternoon (12 PM - 5 PM): Getting warmer, less ideal
     else if (pacificHour >= 12 && pacificHour < 17) {
       if (tempDiff > 5) {
-        return "🔥 Much warmer than yesterday - tomorrow try 7 AM instead";
+        return "🔥 Much warmer than yesterday - earlier times may be more comfortable";
       } else if (windDiff > 3) {
-        return "💨 Windier afternoon - early morning runs are calmer";
+        return "💨 Windier afternoon - check your recommended best time";
       } else if (cloudDiff < -20) {
-        return "☀️ Sunnier than yesterday - morning runs avoid peak UV";
+        return "☀️ Sunnier than yesterday - consider sun protection";
       } else {
-        return "🌤️ For cooler runs, try early morning tomorrow";
+        return "🌤️ Morning hours typically offer calmer conditions";
       }
     }
     
@@ -90,9 +90,9 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
       if (tempDiff <= 0 && windDiff <= 2) {
         return "🌆 Nice evening conditions - good time for a run!";
       } else if (tempDiff > 3) {
-        return "🌆 Warmer evening than yesterday - try 6-7 AM tomorrow";
+        return "🌆 Warmer evening than yesterday - earlier times may be better";
       } else if (windDiff > 3) {
-        return "💨 Windier evening - tomorrow morning will be calmer";
+        return "💨 Windier evening - check for calmer windows";
       } else {
         return "🌆 Decent evening for running";
       }
@@ -101,13 +101,13 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
     // Night (8 PM - 5 AM): Plan for tomorrow
     else {
       if (tempDiff > 5) {
-        return "🌙 Today was warmer - plan a 7 AM start tomorrow";
+        return "🌙 Today was warmer - plan for earlier times tomorrow";
       } else if (windDiff > 3) {
         return "🌙 Today was windier - morning conditions are usually calmer";
       } else if (cloudDiff < -20) {
-        return "🌙 Today was sunnier - morning runs avoid peak UV";
+        return "🌙 Today was sunnier - consider earlier times for less UV";
       } else {
-        return "🌙 Plan ahead: 7-8 AM typically offers the best conditions";
+        return "🌙 Plan ahead: Morning hours typically offer optimal conditions";
       }
     }
   };
