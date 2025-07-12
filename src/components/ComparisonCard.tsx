@@ -77,7 +77,7 @@ const ComparisonCard: React.FC<ComparisonCardProps> = ({
       if (tempDiff > 5) {
         return "🔥 Much warmer than yesterday - earlier times may be more comfortable";
       } else if (windDiff > 3) {
-        return "💨 Windier afternoon - check your recommended best time";
+        return "💨 Windier afternoon - consider sheltered routes";
       } else if (cloudDiff < -20) {
         return "☀️ Sunnier than yesterday - consider sun protection";
       } else {

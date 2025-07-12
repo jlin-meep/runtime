@@ -144,11 +144,11 @@ export const useBestTimeLogic = ({
         const isChilly = slot.temperature < 62;
         
         if (isWindy && isChilly) {
-          return "It's a bit windy and chilly, but the best conditions available today";
+          return "It's windy and chilly today, but it's the best available time to go";
         } else if (isWindy) {
           return "It's pretty windy today, but now it's the least windy time to go";
         } else if (isChilly) {
-          return "It's a little chilly, but the warmest time with lowest winds today";
+          return "It's a little chilly, but it's the warmest time with lowest winds today";
         } else {
           return "Perfect conditions right now - go for it!";
         }
