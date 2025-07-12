@@ -43,11 +43,11 @@ export const calculateDetailedScore = (
   if (uvIndex >= 2 && uvIndex <= 5) {
     uvScore = 10; // Ideal UV range
   } else if (uvIndex < 2) {
-    uvScore = 7; // Low UV (early/late)
+    uvScore = 9; // Low UV (early/late)
   } else if (uvIndex <= 7) {
     uvScore = Math.max(0, (8 - uvIndex) / 3) * 5; // Manageable UV
   } else {
-    uvScore = 2; // Dangerous UV
+    uvScore = 4; // Dangerous UV
   }
   
   // Cloud coverage scoring - 5% weight (5 points max) - prefer some clouds for comfort
