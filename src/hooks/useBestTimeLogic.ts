@@ -168,14 +168,14 @@ export const useBestTimeLogic = ({
       const positiveChanges: string[] = [];
       const negativeChanges: string[] = [];
       
-      // Wind is the most important factor (40% weight) - lower is always better
+      // Wind is the most important factor (45% weight) - lower is always better
       if (windDiff < -2) {
         positiveChanges.push(`winds will calm from ${Math.round(currentWeather.windSpeed)} to ${Math.round(slot.windSpeed)} mph`);
       } else if (windDiff > 2) {
         negativeChanges.push(`windier conditions (${Math.round(slot.windSpeed)} mph vs current ${Math.round(currentWeather.windSpeed)} mph)`);
       }
       
-      // Temperature comfort (30% weight) - prefer temperatures closer to ideal 65-70°F
+      // Temperature comfort (40% weight) - prefer temperatures closer to ideal 65-70°F
       const currentTempScore = Math.abs(currentWeather.temperature - 67.5);
       const futureTempScore = Math.abs(slot.temperature - 67.5);
       
@@ -195,11 +195,11 @@ export const useBestTimeLogic = ({
         }
       }
       
-      // UV considerations (20% weight)
-      if (uvDiff < -2) {
-        positiveChanges.push(`lower UV index (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
-      } else if (uvDiff > 2) {
+      // UV considerations - only mention if dangerous (UV > 7)
+      if (slot.uvIndex > 7 && uvDiff > 1) {
         negativeChanges.push(`higher UV (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
+      } else if (currentWeather.uvIndex > 7 && uvDiff < -1) {
+        positiveChanges.push(`lower UV index (${slot.uvIndex} vs current ${currentWeather.uvIndex})`);
       }
       
       // Cloud coverage (10% weight) - less important but still relevant

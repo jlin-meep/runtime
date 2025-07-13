@@ -22,13 +22,13 @@ const BestTimeRecommendation: React.FC<BestTimeRecommendationProps> = ({
   const isMobile = useIsMobile();
   const contentInfo = <div className="space-y-3">
       <p className="text-sm font-medium text-gray-800">
-        Wind conditions have the highest impact on your running score, followed by temperature comfort.
+        Wind conditions have the highest impact on your running score, followed closely by temperature comfort.
       </p>
       <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-        <div>Wind (40%)</div>
-        <div>Temperature (30%)</div>
-        <div>UV (20%)</div>
-        <div>Clouds (10%)</div>
+        <div>Wind (45%)</div>
+        <div>Temperature (40%)</div>
+        <div>UV (10%)</div>
+        <div>Clouds (5%)</div>
       </div>
     </div>;
   return <div className="text-center py-4 md:py-6">
